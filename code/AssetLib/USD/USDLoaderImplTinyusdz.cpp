@@ -626,6 +626,29 @@ void USDImporterImplTinyusdz::buffers(
     }
 }
 
+using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
+static std::string tinyusdzAnimChannelTypeFor(ChannelType animChannel) {
+    switch (animChannel) {
+    case ChannelType::Transform: {
+        return "Transform";
+    }
+    case ChannelType::Translation: {
+        return "Translation";
+    }
+    case ChannelType::Rotation: {
+        return "Rotation";
+    }
+    case ChannelType::Scale: {
+        return "Scale";
+    }
+    case ChannelType::Weight: {
+        return "Weight";
+    }
+    default:
+        return "Invalid";
+    }
+}
+
 void USDImporterImplTinyusdz::animations(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
@@ -636,6 +659,54 @@ void USDImporterImplTinyusdz::animations(
     ss.str("");
     ss << "animations(): model" << nameWExt << ", numAnimations: " << numAnimations;
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    size_t i = 0;
+    for (const auto &animation : render_scene.animations) {
+        ss.str("");
+        ss << "    animation[" << i << "]: name: |" << animation.display_name << "|";
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        auto mapIter = animation.channels_map.begin();
+        for (; mapIter != animation.channels_map.end(); ++mapIter) {
+            ss.str("");
+            ss << "        channels_map[" << i << "]: key: " << mapIter->first;
+            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+            auto mapIter2 = mapIter->second.begin();
+//            size_t j = 0;
+            for (; mapIter2 != mapIter->second.end(); ++mapIter2) {
+                ChannelType type = mapIter2->first;
+                ss.str("");
+                ss << "            types map[" << i << "][" << tinyusdzAnimChannelTypeFor(type) << "]: ";
+                switch (type) {
+                    case ChannelType::Translation: {
+                        ss << "[" <<
+                           mapIter2->second.translations.samples[0].value[0] << ", " <<
+                            mapIter2->second.translations.samples[0].value[1] << ", " <<
+                            mapIter2->second.translations.samples[0].value[2] << "]";
+                        break;
+                    }
+                    case ChannelType::Rotation: {
+                        ss << "[" <<
+                                mapIter2->second.rotations.samples[0].value[0] << ", " <<
+                                mapIter2->second.rotations.samples[0].value[1] << ", " <<
+                                mapIter2->second.rotations.samples[0].value[2] << ", " <<
+                                mapIter2->second.rotations.samples[0].value[3] << "]";
+                        break;
+                    }
+                    case ChannelType::Scale: {
+                        ss << "[" <<
+                                mapIter2->second.scales.samples[0].value[0] << ", " <<
+                                mapIter2->second.scales.samples[0].value[1] << ", " <<
+                                mapIter2->second.scales.samples[0].value[2] << "]";
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+//                ++j;
+            }
+        }
+        ++i;
+    }
 }
 
 } // namespace Assimp
