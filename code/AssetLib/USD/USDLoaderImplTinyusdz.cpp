@@ -57,7 +57,6 @@ Copyright (c) 2006-2024, assimp team
 #include <assimp/importerdesc.h>
 #include <assimp/IOStreamBuffer.h>
 #include <assimp/IOSystem.hpp>
-#include <assimp/scene.h>
 #include <assimp/StringUtils.h>
 #include <assimp/StreamReader.h>
 
@@ -193,8 +192,8 @@ void USDImporterImplTinyusdz::InternReadFile(
     ss << "InternReadFile(): mNumMeshes: " << pScene->mNumMeshes;
     TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
     pScene->mMeshes = new aiMesh *[pScene->mNumMeshes]();
-    // Create root node
-    pScene->mRootNode = new aiNode();
+    pScene->mRootNode = nodes(render_scene, nameWExt);
+    sanityCheckNodesRecursive(pScene->mRootNode);
     pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
     ss.str("");
     ss << "InternReadFile(): mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
@@ -218,12 +217,66 @@ void USDImporterImplTinyusdz::InternReadFile(
         uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
         pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
-    nodes(render_scene, pScene, nameWExt);
     materials(render_scene, pScene, nameWExt);
     textures(render_scene, pScene, nameWExt);
     textureImages(render_scene, pScene, nameWExt);
     buffers(render_scene, pScene, nameWExt);
     animations(render_scene, pScene, nameWExt);
+}
+
+aiNode *USDImporterImplTinyusdz::nodes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        const std::string &nameWExt) {
+    const size_t numNodes{render_scene.nodes.size()};
+    (void) numNodes; // Ignore unused variable when -Werror enabled
+    stringstream ss;
+    ss.str("");
+    ss << "nodes(): model" << nameWExt << ", numNodes: " << numNodes;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    return nodesRecursive(nullptr, render_scene.nodes[0]);
+}
+
+aiNode *USDImporterImplTinyusdz::nodesRecursive(
+        aiNode *pNodeParent,
+        const tinyusdz::tydra::Node &node) {
+    stringstream ss;
+    aiNode *cNode = new aiNode();
+    cNode->mParent = pNodeParent;
+    cNode->mName.Set(node.prim_name);
+//    ss.str("");
+//    ss << "nodesRecursive(): node " << cNode->mName.C_Str() <<
+//            " disp " << node.display_name << ", abs " << node.abs_path;
+//    if (cNode->mParent != nullptr) {
+//        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
+//    }
+//    ss << " has " << node.children.size() << " children";
+//    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    if (!node.children.empty()) {
+        cNode->mNumChildren = node.children.size();
+        cNode->mChildren = new aiNode *[cNode->mNumChildren];
+    }
+
+    size_t i{0};
+    for (const auto &childNode: node.children) {
+        cNode->mChildren[i] = nodesRecursive(cNode, childNode);
+        ++i;
+    }
+    return cNode;
+}
+
+void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
+        aiNode *cNode) {
+    stringstream ss;
+    ss.str("");
+    ss << "sanityCheckNodesRecursive(): node " << cNode->mName.C_Str();
+    if (cNode->mParent != nullptr) {
+        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
+    }
+    ss << " has " << cNode->mNumChildren << " children";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    for (size_t i = 0; i < cNode->mNumChildren; ++i) {
+        sanityCheckNodesRecursive(cNode->mChildren[i]);
+    }
 }
 
 void USDImporterImplTinyusdz::verticesForMesh(
@@ -347,18 +400,6 @@ void USDImporterImplTinyusdz::uvsForMesh(
             pScene->mMeshes[meshIdx]->mTextureCoords[uvSlotIdx][vertIdx].y = floatPtr[fpj + 1];
         }
     }
-}
-
-void USDImporterImplTinyusdz::nodes(
-        const tinyusdz::tydra::RenderScene &render_scene,
-        aiScene *pScene,
-        const std::string &nameWExt) {
-    const size_t numNodes{render_scene.nodes.size()};
-    (void) numNodes; // Ignore unused variable when -Werror enabled
-    stringstream ss;
-    ss.str("");
-    ss << "nodes(): model" << nameWExt << ", numNodes: " << numNodes;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 }
 
 static aiColor3D *ownedColorPtrFor(const std::array<float, 3> &color) {
