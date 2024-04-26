@@ -187,11 +187,6 @@ void USDImporterImplTinyusdz::InternReadFile(
         TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
         return;
     }
-    pScene->mNumMeshes = render_scene.meshes.size();
-    ss.str("");
-    ss << "InternReadFile(): mNumMeshes: " << pScene->mNumMeshes;
-    TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
-    pScene->mMeshes = new aiMesh *[pScene->mNumMeshes]();
     pScene->mRootNode = nodes(render_scene, nameWExt);
     sanityCheckNodesRecursive(pScene->mRootNode);
     meshes(render_scene, pScene, nameWExt);
@@ -284,11 +279,13 @@ void USDImporterImplTinyusdz::meshes(
         aiScene *pScene,
         const std::string &nameWExt) {
     stringstream ss;
+    pScene->mNumMeshes = render_scene.meshes.size();
+    pScene->mMeshes = new aiMesh *[pScene->mNumMeshes]();
     pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
-    ss.str("");
-    ss << "InternReadFile(): mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
-    TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
     pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
+    ss.str("");
+    ss << "meshes(): pScene->mNumMeshes: " << pScene->mNumMeshes << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     // Export meshes
     for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
