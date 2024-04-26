@@ -194,29 +194,7 @@ void USDImporterImplTinyusdz::InternReadFile(
     pScene->mMeshes = new aiMesh *[pScene->mNumMeshes]();
     pScene->mRootNode = nodes(render_scene, nameWExt);
     sanityCheckNodesRecursive(pScene->mRootNode);
-    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
-    ss.str("");
-    ss << "InternReadFile(): mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
-    TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
-    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
-
-    // Export meshes
-    for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
-        pScene->mMeshes[meshIdx] = new aiMesh();
-        pScene->mMeshes[meshIdx]->mName.Set(render_scene.meshes[meshIdx].prim_name);
-        if (render_scene.meshes[meshIdx].material_id > -1) {
-            pScene->mMeshes[meshIdx]->mMaterialIndex = render_scene.meshes[meshIdx].material_id;
-        }
-        verticesForMesh(render_scene, pScene, meshIdx, nameWExt);
-        facesForMesh(render_scene, pScene, meshIdx, nameWExt);
-        // Some models infer normals from faces, but others need them e.g.
-        //   - apple "toy car" canopy normals will be wrong
-        //   - human "untitled" model (tinyusdz issue #115) will be "splotchy"
-        normalsForMesh(render_scene, pScene, meshIdx, nameWExt);
-        materialsForMesh(render_scene, pScene, meshIdx, nameWExt);
-        uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
-        pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
-    }
+    meshes(render_scene, pScene, nameWExt);
     materials(render_scene, pScene, nameWExt);
     textures(render_scene, pScene, nameWExt);
     textureImages(render_scene, pScene, nameWExt);
@@ -298,6 +276,37 @@ void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     for (size_t i = 0; i < cNode->mNumChildren; ++i) {
         sanityCheckNodesRecursive(cNode->mChildren[i]);
+    }
+}
+
+void USDImporterImplTinyusdz::meshes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        const std::string &nameWExt) {
+    stringstream ss;
+    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
+    ss.str("");
+    ss << "InternReadFile(): mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
+    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
+
+    // Export meshes
+    for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
+        pScene->mMeshes[meshIdx] = new aiMesh();
+        pScene->mMeshes[meshIdx]->mName.Set(render_scene.meshes[meshIdx].prim_name);
+        if (render_scene.meshes[meshIdx].material_id > -1) {
+            pScene->mMeshes[meshIdx]->mMaterialIndex = render_scene.meshes[meshIdx].material_id;
+        }
+        verticesForMesh(render_scene, pScene, meshIdx, nameWExt);
+        facesForMesh(render_scene, pScene, meshIdx, nameWExt);
+        // Some models infer normals from faces, but others need them e.g.
+        //   - apple "toy car" canopy normals will be wrong
+        //   - human "untitled" model (tinyusdz issue #115) will be "splotchy"
+        normalsForMesh(render_scene, pScene, meshIdx, nameWExt);
+        materialsForMesh(render_scene, pScene, meshIdx, nameWExt);
+        uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
+        bonesForMesh(render_scene, pScene, meshIdx, nameWExt);
+        pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
 }
 

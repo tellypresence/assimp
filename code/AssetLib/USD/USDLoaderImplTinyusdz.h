@@ -75,6 +75,11 @@ public:
     void sanityCheckNodesRecursive(
             aiNode *pNode);
 
+    void meshes(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
+
     void verticesForMesh(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
