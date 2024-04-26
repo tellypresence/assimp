@@ -134,6 +134,12 @@ public:
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
             const std::string &nameWExt);
+
+    void blendShapesForMesh(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            size_t meshIdx,
+            const std::string &nameWExt);
 };
 } // namespace Assimp
 #endif // AI_USDLOADER_IMPL_TINYUSDZ_H_INCLUDED

@@ -305,7 +305,7 @@ void USDImporterImplTinyusdz::meshes(
         normalsForMesh(render_scene, pScene, meshIdx, nameWExt);
         materialsForMesh(render_scene, pScene, meshIdx, nameWExt);
         uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
-        bonesForMesh(render_scene, pScene, meshIdx, nameWExt);
+        blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
         pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
 }
@@ -732,6 +732,36 @@ void USDImporterImplTinyusdz::animations(
 //                ++j;
             }
         }
+        ++i;
+    }
+}
+
+void USDImporterImplTinyusdz::blendShapesForMesh(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        size_t meshIdx,
+        const std::string &nameWExt) {
+    stringstream ss;
+    const size_t numBlendShapeTargets{render_scene.meshes[meshIdx].targets.size()};
+    (void) numBlendShapeTargets; // Ignore unused variable when -Werror enabled
+    ss.str("");
+    ss << "blendShapesForMesh(): mesh[" << meshIdx << "], model" << nameWExt <<
+            ", numBlendShapeTargets: " << numBlendShapeTargets;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    auto mapIter = render_scene.meshes[meshIdx].targets.begin();
+    size_t i{0};
+    for (; mapIter != render_scene.meshes[meshIdx].targets.end(); ++mapIter) {
+        // mapIter: std::map<std::string, ShapeTarget>
+        const std::string name{mapIter->first};
+        const tinyusdz::tydra::ShapeTarget shapeTarget{mapIter->second};
+        ss.str("");
+        ss << "    target[" << i << "]: name: " << name << ", prim_name: " <<
+                shapeTarget.prim_name << ", abs_path: " << shapeTarget.abs_path <<
+                ", display_name: " << shapeTarget.display_name << ", " << shapeTarget.pointIndices.size() <<
+                " pointIndices, " << shapeTarget.pointOffsets.size() << " pointOffsets, " <<
+                shapeTarget.normalOffsets.size() << " normalOffsets, " << shapeTarget.inbetweens.size() <<
+                " inbetweens";
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         ++i;
     }
 }
