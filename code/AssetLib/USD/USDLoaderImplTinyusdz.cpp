@@ -332,40 +332,13 @@ void USDImporterImplTinyusdz::facesForMesh(
     pScene->mMeshes[meshIdx]->mNumFaces = render_scene.meshes[meshIdx].faceVertexCounts().size();
     pScene->mMeshes[meshIdx]->mFaces = new aiFace[pScene->mMeshes[meshIdx]->mNumFaces]();
     size_t faceVertIdxOffset = 0;
-//    stringstream ss;
-//    ss.str("");
-//    ss << "facesForMesh() for model " << nameWExt << " mesh[" << meshIdx << "]; " <<
-//            render_scene.meshes[meshIdx].faceVertexIndices().size() << " indices, " <<
-//            render_scene.meshes[meshIdx].faceVertexCounts().size() << " counts, type: " <<
-//            static_cast<int>(render_scene.meshes[meshIdx].vertexArrayType) <<
-//            ", Indexed: " << static_cast<int>(tinyusdz::tydra::RenderMesh::VertexArrayType::Indexed) <<
-//            ", Facevarying: " << static_cast<int>(tinyusdz::tydra::RenderMesh::VertexArrayType::Facevarying);
-//    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    if (render_scene.meshes[meshIdx].vertexArrayType == tinyusdz::tydra::RenderMesh::VertexArrayType::Indexed) {
-//        ss.str("");
-//        ss << "vertexArrayType: Indexed";
-//        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    } else {
-//        ss.str("");
-//        ss << "vertexArrayType: Facevarying";
-//        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    }
     for (size_t faceIdx = 0; faceIdx < pScene->mMeshes[meshIdx]->mNumFaces; ++faceIdx) {
         pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices = render_scene.meshes[meshIdx].faceVertexCounts()[faceIdx];
         pScene->mMeshes[meshIdx]->mFaces[faceIdx].mIndices = new unsigned int[pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices];
-//        ss.str("");
-//        ss << "    m[" << meshIdx << "] f[" << faceIdx << "] o[" <<
-//                faceVertIdxOffset << "] N: " << pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices << ": ";
         for (size_t j = 0; j < pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices; ++j) {
-//            ss << "i[" << j << "]: " <<
-//                    render_scene.meshes[meshIdx].faceVertexIndices()[j + faceVertIdxOffset];
-//            if (j < pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices - 1) {
-//                ss << ", ";
-//            }
             pScene->mMeshes[meshIdx]->mFaces[faceIdx].mIndices[j] =
                     render_scene.meshes[meshIdx].faceVertexIndices()[j + faceVertIdxOffset];
         }
-//        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         faceVertIdxOffset += pScene->mMeshes[meshIdx]->mFaces[faceIdx].mNumIndices;
     }
 }
@@ -375,14 +348,8 @@ void USDImporterImplTinyusdz::normalsForMesh(
         aiScene *pScene,
         size_t meshIdx,
         const std::string &nameWExt) {
-    stringstream ss;
     pScene->mMeshes[meshIdx]->mNormals = new aiVector3D[pScene->mMeshes[meshIdx]->mNumVertices];
     const float *floatPtr = reinterpret_cast<const float *>(render_scene.meshes[meshIdx].normals.get_data().data());
-    ss.str("");
-    ss << "normalsForMesh() for model " << nameWExt << " mesh[" << meshIdx << "]: " <<
-            "data size: " << render_scene.meshes[meshIdx].normals.get_data().size() <<
-            ", num verts: " << pScene->mMeshes[meshIdx]->mNumVertices;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     for (size_t vertIdx = 0, fpj = 0; vertIdx < pScene->mMeshes[meshIdx]->mNumVertices; ++vertIdx, fpj += 3) {
         pScene->mMeshes[meshIdx]->mNormals[vertIdx].x = floatPtr[fpj];
         pScene->mMeshes[meshIdx]->mNormals[vertIdx].y = floatPtr[fpj + 1];
@@ -402,12 +369,7 @@ void USDImporterImplTinyusdz::uvsForMesh(
         aiScene *pScene,
         size_t meshIdx,
         const std::string &nameWExt) {
-    stringstream ss;
     const size_t uvSlotsCount = render_scene.meshes[meshIdx].texcoords.size();
-    ss.str("");
-    ss << "uvsForMesh(): uvSlotsCount for mesh[" << meshIdx << "]: " << uvSlotsCount << " w/" <<
-            pScene->mMeshes[meshIdx]->mNumVertices << " vertices";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     if (uvSlotsCount < 1) {
         return;
     }
@@ -416,14 +378,7 @@ void USDImporterImplTinyusdz::uvsForMesh(
     for (size_t uvSlotIdx = 0; uvSlotIdx < uvSlotsCount; ++uvSlotIdx) {
         const auto uvsForSlot = render_scene.meshes[meshIdx].texcoords.at(uvSlotIdx);
         if (uvsForSlot.get_data().size() == 0) {
-            ss.str("");
-            ss << "    NOTICE: uvSlotIdx: " << uvSlotIdx << " has " << uvsForSlot.get_data().size() << " bytes";
-            TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
             continue;
-        } else {
-            ss.str("");
-            ss << "    uvSlotIdx: " << uvSlotIdx << " has " << uvsForSlot.get_data().size() << " bytes";
-            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         }
         const float *floatPtr = reinterpret_cast<const float *>(uvsForSlot.get_data().data());
         for (size_t vertIdx = 0, fpj = 0; vertIdx < pScene->mMeshes[meshIdx]->mNumVertices; ++vertIdx, fpj += 2) {
