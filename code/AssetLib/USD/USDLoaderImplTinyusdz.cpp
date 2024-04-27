@@ -633,11 +633,6 @@ void USDImporterImplTinyusdz::buffers(
     }
 }
 
-    }
-    }
-    }
-}
-
 using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
 void USDImporterImplTinyusdz::animations(
         const tinyusdz::tydra::RenderScene &render_scene,
