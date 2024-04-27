@@ -63,6 +63,7 @@ Copyright (c) 2006-2024, assimp team
 #include "io-util.hh" // namespace tinyusdz::io
 #include "tydra/scene-access.hh"
 #include "tydra/shader-network.hh"
+#include "USDLoaderImplTinyusdzHelper.h"
 #include "USDLoaderImplTinyusdz.h"
 #include "USDLoaderUtil.h"
 
@@ -209,27 +210,9 @@ aiNode *USDImporterImplTinyusdz::nodes(
     return nodesRecursive(nullptr, render_scene.nodes[0]);
 }
 
-static aiMatrix4x4 tinyUsdzMat4ToAiMat4(const double matIn[4][4]) {
-    aiMatrix4x4 matOut;
-    matOut.a1 = matIn[0][0];
-    matOut.a2 = matIn[0][1];
-    matOut.a3 = matIn[0][2];
-    matOut.a4 = matIn[0][3];
-    matOut.b1 = matIn[1][0];
-    matOut.b2 = matIn[1][1];
-    matOut.b3 = matIn[1][2];
-    matOut.b4 = matIn[1][3];
-    matOut.c1 = matIn[2][0];
-    matOut.c2 = matIn[2][1];
-    matOut.c3 = matIn[2][2];
-    matOut.c4 = matIn[2][3];
-    matOut.d1 = matIn[3][0];
-    matOut.d2 = matIn[3][1];
-    matOut.d3 = matIn[3][2];
-    matOut.d4 = matIn[3][3];
-    return matOut;
-}
-
+using Assimp::tinyusdzNodeTypeFor;
+using Assimp::tinyUsdzMat4ToAiMat4;
+using tinyusdz::tydra::NodeType;
 aiNode *USDImporterImplTinyusdz::nodesRecursive(
         aiNode *pNodeParent,
         const tinyusdz::tydra::Node &node) {
@@ -650,29 +633,12 @@ void USDImporterImplTinyusdz::buffers(
     }
 }
 
-using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
-static std::string tinyusdzAnimChannelTypeFor(ChannelType animChannel) {
-    switch (animChannel) {
-    case ChannelType::Transform: {
-        return "Transform";
     }
-    case ChannelType::Translation: {
-        return "Translation";
     }
-    case ChannelType::Rotation: {
-        return "Rotation";
-    }
-    case ChannelType::Scale: {
-        return "Scale";
-    }
-    case ChannelType::Weight: {
-        return "Weight";
-    }
-    default:
-        return "Invalid";
     }
 }
 
+using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
 void USDImporterImplTinyusdz::animations(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
