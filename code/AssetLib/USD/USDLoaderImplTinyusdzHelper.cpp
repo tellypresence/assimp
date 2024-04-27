@@ -1,3 +1,4 @@
+#ifndef ASSIMP_BUILD_NO_USD_IMPORTER
 #include "USDLoaderImplTinyusdzHelper.h"
 
 using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
@@ -72,3 +73,5 @@ aiMatrix4x4 Assimp::tinyUsdzMat4ToAiMat4(const double matIn[4][4]) {
     matOut.d4 = matIn[3][3];
     return matOut;
 }
+
+#endif // !! ASSIMP_BUILD_NO_USD_IMPORTER
