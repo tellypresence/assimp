@@ -64,20 +64,10 @@ public:
             aiScene *pScene,
             IOSystem *pIOHandler);
 
-    aiNode *nodes(
-            const tinyusdz::tydra::RenderScene &render_scene,
-            const std::string &nameWExt);
-
-    aiNode *nodesRecursive(
-            aiNode *pNodeParent,
-            const tinyusdz::tydra::Node &node);
-
-    void sanityCheckNodesRecursive(
-            aiNode *pNode);
-
     void meshes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
+            const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
             const std::string &nameWExt);
 
     void verticesForMesh(
@@ -130,7 +120,37 @@ public:
             aiScene *pScene,
             const std::string &nameWExt);
 
+    // EXPERIMENTAL
+    // Untested/R 'n D code, to be considered suspect
+    aiNode *nodes(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::string &nameWExt);
+
+    aiNode *nodesRecursive(
+            aiNode *pNodeParent,
+            const tinyusdz::tydra::Node &node,
+            std::map<size_t, tinyusdz::tydra::Node> &meshNodes);
+
+    void sanityCheckNodesRecursive(
+            aiNode *pNode);
+
+    void bonesForMesh(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            size_t meshIdx,
+            const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::string &nameWExt);
+
+    tinyusdz::tydra::Node bonesRecursive(
+            const tinyusdz::tydra::Node &node);
+
     void animations(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
+
+    void blendShapes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
             const std::string &nameWExt);

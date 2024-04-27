@@ -1,6 +1,12 @@
 #ifndef ASSIMP_BUILD_NO_USD_IMPORTER
 #include "USDLoaderImplTinyusdzHelper.h"
 
+#include "../../../contrib/tinyusdz/assimp_tinyusdz_logging.inc"
+
+namespace {
+const char *const TAG = "tinyusdz helper";
+}
+
 using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
 std::string Assimp::tinyusdzAnimChannelTypeFor(ChannelType animChannel) {
     switch (animChannel) {

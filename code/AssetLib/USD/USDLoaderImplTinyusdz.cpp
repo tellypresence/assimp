@@ -70,7 +70,7 @@ Copyright (c) 2006-2024, assimp team
 #include "../../../contrib/tinyusdz/assimp_tinyusdz_logging.inc"
 
 namespace {
-    const char *const TAG = "USDLoaderImplTinyusdz (C++)";
+    const char *const TAG = "tinyusdz loader";
 }
 
 namespace Assimp {
@@ -188,9 +188,14 @@ void USDImporterImplTinyusdz::InternReadFile(
         TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
         return;
     }
-    pScene->mRootNode = nodes(render_scene, nameWExt);
-    sanityCheckNodesRecursive(pScene->mRootNode);
-    meshes(render_scene, pScene, nameWExt);
+    std::map<size_t, tinyusdz::tydra::Node> meshNodes;
+    pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
+    ss.str("");
+    ss << "InternReadFile(): meshNodes: " << meshNodes.size() << " items";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+
+//    sanityCheckNodesRecursive(pScene->mRootNode);
+    meshes(render_scene, pScene, meshNodes, nameWExt);
     materials(render_scene, pScene, nameWExt);
     textures(render_scene, pScene, nameWExt);
     textureImages(render_scene, pScene, nameWExt);
@@ -198,68 +203,10 @@ void USDImporterImplTinyusdz::InternReadFile(
     animations(render_scene, pScene, nameWExt);
 }
 
-aiNode *USDImporterImplTinyusdz::nodes(
-        const tinyusdz::tydra::RenderScene &render_scene,
-        const std::string &nameWExt) {
-    const size_t numNodes{render_scene.nodes.size()};
-    (void) numNodes; // Ignore unused variable when -Werror enabled
-    stringstream ss;
-    ss.str("");
-    ss << "nodes(): model" << nameWExt << ", numNodes: " << numNodes;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    return nodesRecursive(nullptr, render_scene.nodes[0]);
-}
-
-using Assimp::tinyusdzNodeTypeFor;
-using Assimp::tinyUsdzMat4ToAiMat4;
-using tinyusdz::tydra::NodeType;
-aiNode *USDImporterImplTinyusdz::nodesRecursive(
-        aiNode *pNodeParent,
-        const tinyusdz::tydra::Node &node) {
-    stringstream ss;
-    aiNode *cNode = new aiNode();
-    cNode->mParent = pNodeParent;
-    cNode->mName.Set(node.prim_name);
-    cNode->mTransformation = tinyUsdzMat4ToAiMat4(node.local_matrix.m);
-//    ss.str("");
-//    ss << "nodesRecursive(): node " << cNode->mName.C_Str() <<
-//            " disp " << node.display_name << ", abs " << node.abs_path;
-//    if (cNode->mParent != nullptr) {
-//        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
-//    }
-//    ss << " has " << node.children.size() << " children";
-//    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    if (!node.children.empty()) {
-        cNode->mNumChildren = node.children.size();
-        cNode->mChildren = new aiNode *[cNode->mNumChildren];
-    }
-
-    size_t i{0};
-    for (const auto &childNode: node.children) {
-        cNode->mChildren[i] = nodesRecursive(cNode, childNode);
-        ++i;
-    }
-    return cNode;
-}
-
-void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
-        aiNode *cNode) {
-    stringstream ss;
-    ss.str("");
-    ss << "sanityCheckNodesRecursive(): node " << cNode->mName.C_Str();
-    if (cNode->mParent != nullptr) {
-        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
-    }
-    ss << " has " << cNode->mNumChildren << " children";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    for (size_t i = 0; i < cNode->mNumChildren; ++i) {
-        sanityCheckNodesRecursive(cNode->mChildren[i]);
-    }
-}
-
 void USDImporterImplTinyusdz::meshes(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
+        const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
         const std::string &nameWExt) {
     stringstream ss;
     pScene->mNumMeshes = render_scene.meshes.size();
@@ -274,6 +221,15 @@ void USDImporterImplTinyusdz::meshes(
     for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
         pScene->mMeshes[meshIdx] = new aiMesh();
         pScene->mMeshes[meshIdx]->mName.Set(render_scene.meshes[meshIdx].prim_name);
+        ss.str("");
+        ss << "   mesh[" << meshIdx << "]: " <<
+                render_scene.meshes[meshIdx].joint_and_weights.jointIndices.size() << " jointIndices, " <<
+                render_scene.meshes[meshIdx].joint_and_weights.jointWeights.size() << " jointWeights, elementSize: " <<
+                render_scene.meshes[meshIdx].joint_and_weights.elementSize;
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        ss.str("");
+        ss << "        skel_id: " << render_scene.meshes[meshIdx].skel_id;
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         if (render_scene.meshes[meshIdx].material_id > -1) {
             pScene->mMeshes[meshIdx]->mMaterialIndex = render_scene.meshes[meshIdx].material_id;
         }
@@ -285,6 +241,7 @@ void USDImporterImplTinyusdz::meshes(
         normalsForMesh(render_scene, pScene, meshIdx, nameWExt);
         materialsForMesh(render_scene, pScene, meshIdx, nameWExt);
         uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
+        bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
         blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
         pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
@@ -498,7 +455,9 @@ void USDImporterImplTinyusdz::materials(
         if (material.surfaceShader.ior.is_texture()) {
             ss << "    material[" << pScene->mNumMaterials << "]: ior tex id " << material.surfaceShader.ior.textureId << "\n";
         }
-        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        if (!ss.str().empty()) {
+            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        }
 
         pScene->mMaterials[pScene->mNumMaterials] = mat;
         ++pScene->mNumMaterials;
@@ -628,97 +587,6 @@ void USDImporterImplTinyusdz::buffers(
     for (const auto &buffer : render_scene.buffers) {
         ss.str("");
         ss << "    buffer[" << i << "]: count: " << buffer.data.size() << ", type: " << to_string(buffer.componentType);
-        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-        ++i;
-    }
-}
-
-using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
-void USDImporterImplTinyusdz::animations(
-        const tinyusdz::tydra::RenderScene &render_scene,
-        aiScene *pScene,
-        const std::string &nameWExt) {
-    const size_t numAnimations{render_scene.animations.size()};
-    (void) numAnimations; // Ignore unused variable when -Werror enabled
-    stringstream ss;
-    ss.str("");
-    ss << "animations(): model" << nameWExt << ", numAnimations: " << numAnimations;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    size_t i = 0;
-    for (const auto &animation : render_scene.animations) {
-        ss.str("");
-        ss << "    animation[" << i << "]: name: |" << animation.display_name << "|";
-        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-        auto mapIter = animation.channels_map.begin();
-        for (; mapIter != animation.channels_map.end(); ++mapIter) {
-            ss.str("");
-            ss << "        channels_map[" << i << "]: key: " << mapIter->first;
-            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-            auto mapIter2 = mapIter->second.begin();
-//            size_t j = 0;
-            for (; mapIter2 != mapIter->second.end(); ++mapIter2) {
-                ChannelType type = mapIter2->first;
-                ss.str("");
-                ss << "            types map[" << i << "][" << tinyusdzAnimChannelTypeFor(type) << "]: ";
-                switch (type) {
-                    case ChannelType::Translation: {
-                        ss << "[" <<
-                           mapIter2->second.translations.samples[0].value[0] << ", " <<
-                            mapIter2->second.translations.samples[0].value[1] << ", " <<
-                            mapIter2->second.translations.samples[0].value[2] << "]";
-                        break;
-                    }
-                    case ChannelType::Rotation: {
-                        ss << "[" <<
-                                mapIter2->second.rotations.samples[0].value[0] << ", " <<
-                                mapIter2->second.rotations.samples[0].value[1] << ", " <<
-                                mapIter2->second.rotations.samples[0].value[2] << ", " <<
-                                mapIter2->second.rotations.samples[0].value[3] << "]";
-                        break;
-                    }
-                    case ChannelType::Scale: {
-                        ss << "[" <<
-                                mapIter2->second.scales.samples[0].value[0] << ", " <<
-                                mapIter2->second.scales.samples[0].value[1] << ", " <<
-                                mapIter2->second.scales.samples[0].value[2] << "]";
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-//                ++j;
-            }
-        }
-        ++i;
-    }
-}
-
-void USDImporterImplTinyusdz::blendShapesForMesh(
-        const tinyusdz::tydra::RenderScene &render_scene,
-        aiScene *pScene,
-        size_t meshIdx,
-        const std::string &nameWExt) {
-    stringstream ss;
-    const size_t numBlendShapeTargets{render_scene.meshes[meshIdx].targets.size()};
-    (void) numBlendShapeTargets; // Ignore unused variable when -Werror enabled
-    ss.str("");
-    ss << "blendShapesForMesh(): mesh[" << meshIdx << "], model" << nameWExt <<
-            ", numBlendShapeTargets: " << numBlendShapeTargets;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    auto mapIter = render_scene.meshes[meshIdx].targets.begin();
-    size_t i{0};
-    for (; mapIter != render_scene.meshes[meshIdx].targets.end(); ++mapIter) {
-        // mapIter: std::map<std::string, ShapeTarget>
-        const std::string name{mapIter->first};
-        const tinyusdz::tydra::ShapeTarget shapeTarget{mapIter->second};
-        ss.str("");
-        ss << "    target[" << i << "]: name: " << name << ", prim_name: " <<
-                shapeTarget.prim_name << ", abs_path: " << shapeTarget.abs_path <<
-                ", display_name: " << shapeTarget.display_name << ", " << shapeTarget.pointIndices.size() <<
-                " pointIndices, " << shapeTarget.pointOffsets.size() << " pointOffsets, " <<
-                shapeTarget.normalOffsets.size() << " normalOffsets, " << shapeTarget.inbetweens.size() <<
-                " inbetweens";
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         ++i;
     }
