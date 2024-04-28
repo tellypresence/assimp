@@ -399,61 +399,86 @@ void USDImporterImplTinyusdz::parseMapKeyTypeToValAnimChannel(
         aiNodeAnim *nbone,
         const std::map<ChannelType, AnimationChannel> &typeToChannelMap
 ) {
-    stringstream ss;
-    size_t i_trs = 0; // 0, 1, 2 for translate, rotate, scale: nothing useful here
     auto tToCMapIter = typeToChannelMap.begin();
     for (; tToCMapIter != typeToChannelMap.end(); ++tToCMapIter) {
-        ChannelType type = tToCMapIter->first;
+        parseAnimChannel(nanim, nbone, tToCMapIter->first, tToCMapIter->second);
+    }
+}
+
+void USDImporterImplTinyusdz::parseAnimChannel(
+        aiAnimation *nanim,
+        aiNodeAnim *nbone,
+        const AnimationChannel &animChannel
+) {
+    parseAnimChannel(
+            nanim,
+            nbone,
+            animChannel.type,
+            animChannel
+    );
+}
+
+void USDImporterImplTinyusdz::parseAnimChannel(
+        aiAnimation *nanim,
+        aiNodeAnim *nbone,
+        ChannelType type,
+        const AnimationChannel &animChannel
+) {
+    stringstream ss;
+    size_t i_trs = 0; // 0, 1, 2 for translate, rotate, scale: nothing useful here
+    if (type != animChannel.type) {
         ss.str("");
-        //                ss << "            types map[" << i << "][" << ich << "][" << i_trs << "][" <<
-        //                   tinyusdzAnimChannelTypeFor(type) << "]: ";
-        switch (type) {
+        ss << "parseAnimChannel(): NOTICE: channel type mismatch; type (map key) " << tinyusdzAnimChannelTypeFor(type) << " but animChannel.type (from map value) " <<
+                tinyusdzAnimChannelTypeFor(animChannel.type);
+        TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
+    }
+
+    //                ss << "            types map[" << i << "][" << ich << "][" << i_trs << "][" <<
+    //                   tinyusdzAnimChannelTypeFor(type) << "]: ";
+    switch (type) {
         case ChannelType::Translation: {
-            addBoneTranslations(nanim, nbone, tToCMapIter->second.translations);
-            //                        std::array<float, 3> translate = tToCMapIter->second.translations.samples[i_trs].value;
+            addBoneTranslations(nanim, nbone, animChannel.translations);
+            //                        std::array<float, 3> translate = animChannel.translations.samples[i_trs].value;
             //                        aiVector3D pos(translate[0], translate[1], translate[2]);
-            //                        nbone->mPositionKeys[i_trs].mTime = tToCMapIter->second.translations.samples[i_trs].t;
+            //                        nbone->mPositionKeys[i_trs].mTime = animChannel.translations.samples[i_trs].t;
             //                        nbone->mPositionKeys[i_trs].mValue = pos;
-            //                        ss << tToCMapIter->second.translations.samples.size() << " samples";
+            //                        ss << animChannel.translations.samples.size() << " samples";
             //                        ss << "[" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]";
             break;
         }
         case ChannelType::Rotation: {
-            addBoneRotations(nanim, nbone, tToCMapIter->second.rotations);
-            //                        ss << tToCMapIter->second.rotations.samples.size() << " samples";
+            addBoneRotations(nanim, nbone, animChannel.rotations);
+            //                        ss << animChannel.rotations.samples.size() << " samples";
             //                        ss << "[" <<
-            //                                tToCMapIter->second.rotations.samples[0].value[0] << ", " <<
-            //                                tToCMapIter->second.rotations.samples[0].value[1] << ", " <<
-            //                                tToCMapIter->second.rotations.samples[0].value[2] << ", " <<
-            //                                tToCMapIter->second.rotations.samples[0].value[3] << "]";
+            //                                animChannel.rotations.samples[0].value[0] << ", " <<
+            //                                animChannel.rotations.samples[0].value[1] << ", " <<
+            //                                animChannel.rotations.samples[0].value[2] << ", " <<
+            //                                animChannel.rotations.samples[0].value[3] << "]";
             break;
         }
         case ChannelType::Scale: {
-            addBoneScales(nanim, nbone, tToCMapIter->second.scales);
-            //                        ss << tToCMapIter->second.scales.samples.size() << " samples";
+            addBoneScales(nanim, nbone, animChannel.scales);
+            //                        ss << animChannel.scales.samples.size() << " samples";
             //                        ss << "[" <<
-            //                                tToCMapIter->second.scales.samples[0].value[0] << ", " <<
-            //                                tToCMapIter->second.scales.samples[0].value[1] << ", " <<
-            //                                tToCMapIter->second.scales.samples[0].value[2] << "]";
+            //                                animChannel.scales.samples[0].value[0] << ", " <<
+            //                                animChannel.scales.samples[0].value[1] << ", " <<
+            //                                animChannel.scales.samples[0].value[2] << "]";
             break;
         }
         case ChannelType::Weight: {
-            //                        addBoneScales(nbone, tToCMapIter->second.scales);
+            //                        addBoneScales(nbone, animChannel.scales);
             ss << "            types map[" << i_trs << "][" <<
                     tinyusdzAnimChannelTypeFor(type) << "]: ";
-            ss << tToCMapIter->second.weights.samples.size() << " samples";
+            ss << animChannel.weights.samples.size() << " samples";
             TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
             //                        ss << "[" <<
-            //                                tToCMapIter->second.scales.samples[0].value[0] << ", " <<
-            //                                tToCMapIter->second.scales.samples[0].value[1] << ", " <<
-            //                                tToCMapIter->second.scales.samples[0].value[2] << "]";
+            //                                animChannel.scales.samples[0].value[0] << ", " <<
+            //                                animChannel.scales.samples[0].value[1] << ", " <<
+            //                                animChannel.scales.samples[0].value[2] << "]";
             break;
         }
         default:
             break;
-        }
-        //                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-        ++i_trs;
     }
 }
 

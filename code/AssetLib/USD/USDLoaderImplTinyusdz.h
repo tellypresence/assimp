@@ -173,6 +173,18 @@ public:
             const std::map<tinyusdz::tydra::AnimationChannel::ChannelType,
                     tinyusdz::tydra::AnimationChannel> &typeToChannelMap);
 
+    void parseAnimChannel(
+            aiAnimation *nanim,
+            aiNodeAnim *nbone,
+            const tinyusdz::tydra::AnimationChannel &animChannel
+            );
+
+    void parseAnimChannel(
+            aiAnimation *nanim,
+            aiNodeAnim *nbone,
+            tinyusdz::tydra::AnimationChannel::ChannelType type,
+            const tinyusdz::tydra::AnimationChannel &animChannel);
+
     void blendShapes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
