@@ -96,4 +96,11 @@ aiMatrix4x4 Assimp::tinyUsdzMat4ToAiMat4(const double matIn[4][4]) {
     return matOut;
 }
 
+aiQuaternion Assimp::tinyUsdzQuatToAiQuat(const std::array<float, 4> &quatIn) {
+    // tinyusdz "quat" is x,y,z,w
+    // aiQuaternion is w,x,y,z
+    return aiQuaternion(
+            quatIn[3], quatIn[0], quatIn[1], quatIn[2]);
+}
+
 #endif // !! ASSIMP_BUILD_NO_USD_IMPORTER

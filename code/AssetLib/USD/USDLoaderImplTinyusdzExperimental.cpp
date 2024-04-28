@@ -258,8 +258,7 @@ static void addBoneRotations(
     nbone->mRotationKeys = new aiQuatKey[nbone->mNumRotationKeys];
     size_t i{0};
     for (const auto rotIter : rotations.samples) {
-        nbone->mRotationKeys[i].mValue = aiQuaternion(
-                rotIter.value[0], rotIter.value[1], rotIter.value[2], rotIter.value[3]);
+        nbone->mRotationKeys[i].mValue = tinyUsdzQuatToAiQuat(rotIter.value);
         nbone->mRotationKeys[i].mTime = rotIter.t;
 //        if (nbone->mRotationKeys[i].mTime > nanim->mDuration) {
 //            ss.str("");
