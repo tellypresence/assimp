@@ -294,7 +294,8 @@ static void addBoneScales(
     }
 }
 
-using ChannelType = tinyusdz::tydra::AnimationChannel::ChannelType;
+using tinyusdz::tydra::AnimationChannel;
+using ChannelType = AnimationChannel::ChannelType;
 void USDImporterImplTinyusdz::animations(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
@@ -322,10 +323,11 @@ void USDImporterImplTinyusdz::animations(
         ss << "    animation[" << i << "]: name: |" << animation.display_name << "|";
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
-        ss.str("");
-        ss << "    animation[" << i << "] has " << animation.blendshape_weights_map.size() <<
-                " blendshape weights";
-        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        if (!animation.blendshape_weights_map.empty()) {
+            ss.str("");
+            ss << "    animation[" << i << "] has " << animation.blendshape_weights_map.size() << " blendshape weights";
+            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        }
 
         auto bwMapIter = animation.blendshape_weights_map.begin();
         //std::map<std::string, std::vector<AnimationSample<float>>> blendshape_weights_map;
@@ -334,7 +336,7 @@ void USDImporterImplTinyusdz::animations(
             const std::string &name{bwMapIter->first};
             const auto &vecAnimSamples{bwMapIter->second};
             ss.str("");
-            ss << "        blendshape_weights_map[" << i << "] blendshape name " << name << " has " <<
+            ss << "        blendshape_weights_map[" << i << "][" << ich << "] blendshape name " << name << " has " <<
                     vecAnimSamples.size() << " samples";
             TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
             ++ich;
@@ -346,82 +348,7 @@ void USDImporterImplTinyusdz::animations(
         ss.str("");
         ss << "    animation[" << i << "] has " << animation.channels_map.size() << " channels";
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-        auto mapIter = animation.channels_map.begin();
-        ich = 0;
-        for (; mapIter != animation.channels_map.end(); ++mapIter) {
-            aiNodeAnim *nbone = new aiNodeAnim;
-            nbone->mNodeName.Set(mapIter->first.c_str());
-            nanim->mChannels[ich] = nbone;
-            //            nbone->mNumPositionKeys = mapIter->second.size();
-            //            nbone->mPositionKeys = new aiVectorKey[nbone->mNumPositionKeys];
-            //            nbone->mNumRotationKeys = mapIter->second.size();
-            //            nbone->mRotationKeys = new aiQuatKey[nbone->mNumRotationKeys];
-            //            nbone->mNumScalingKeys = mapIter->second.size();
-            //            nbone->mScalingKeys = new aiVectorKey[nbone->mNumScalingKeys];
-
-            ss.str("");
-            ss << "        channels_map[" << i << "][" << ich << "]: key: " << mapIter->first;
-            //            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-            auto mapIter2 = mapIter->second.begin();
-            size_t i_trs = 0; // 0, 1, 2 for translate, rotate, scale: nothing useful here
-            for (; mapIter2 != mapIter->second.end(); ++mapIter2) {
-                ChannelType type = mapIter2->first;
-                ss.str("");
-                //                ss << "            types map[" << i << "][" << ich << "][" << i_trs << "][" <<
-                //                   tinyusdzAnimChannelTypeFor(type) << "]: ";
-                switch (type) {
-                case ChannelType::Translation: {
-                    addBoneTranslations(nanim, nbone, mapIter2->second.translations);
-                    //                        std::array<float, 3> translate = mapIter2->second.translations.samples[i_trs].value;
-                    //                        aiVector3D pos(translate[0], translate[1], translate[2]);
-                    //                        nbone->mPositionKeys[i_trs].mTime = mapIter2->second.translations.samples[i_trs].t;
-                    //                        nbone->mPositionKeys[i_trs].mValue = pos;
-                    //                        ss << mapIter2->second.translations.samples.size() << " samples";
-                    //                        ss << "[" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]";
-                    break;
-                }
-                case ChannelType::Rotation: {
-                    addBoneRotations(nanim, nbone, mapIter2->second.rotations);
-                    //                        ss << mapIter2->second.rotations.samples.size() << " samples";
-                    //                        ss << "[" <<
-                    //                                mapIter2->second.rotations.samples[0].value[0] << ", " <<
-                    //                                mapIter2->second.rotations.samples[0].value[1] << ", " <<
-                    //                                mapIter2->second.rotations.samples[0].value[2] << ", " <<
-                    //                                mapIter2->second.rotations.samples[0].value[3] << "]";
-                    break;
-                }
-                case ChannelType::Scale: {
-                    addBoneScales(nanim, nbone, mapIter2->second.scales);
-                    //                        ss << mapIter2->second.scales.samples.size() << " samples";
-                    //                        ss << "[" <<
-                    //                                mapIter2->second.scales.samples[0].value[0] << ", " <<
-                    //                                mapIter2->second.scales.samples[0].value[1] << ", " <<
-                    //                                mapIter2->second.scales.samples[0].value[2] << "]";
-                    break;
-                }
-                case ChannelType::Weight: {
-                    //                        addBoneScales(nbone, mapIter2->second.scales);
-                    ss << "            types map[" << i << "][" << ich << "][" << i_trs << "][" <<
-                            tinyusdzAnimChannelTypeFor(type) << "]: ";
-                    ss << mapIter2->second.weights.samples.size() << " samples";
-                    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-                    //                        ss << "[" <<
-                    //                                mapIter2->second.scales.samples[0].value[0] << ", " <<
-                    //                                mapIter2->second.scales.samples[0].value[1] << ", " <<
-                    //                                mapIter2->second.scales.samples[0].value[2] << "]";
-                    break;
-                }
-                default:
-                    break;
-                }
-                //                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-                ++i_trs;
-            }
-//            ss.str("");
-//            ss << "        anim[" << i << "]: mDuration: " << nanim->mDuration;
-//            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-            ++ich;
-        }
+        parseMapKeyJointToValAnimChannelsMap(nanim, animation.channels_map);
         ss.str("");
         ss << "    animation[" << i << "] done...";
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
@@ -437,6 +364,96 @@ void USDImporterImplTinyusdz::animations(
         pScene->mAnimations = new aiAnimation *[pScene->mNumAnimations];
         for (unsigned int a = 0; a < newAnims.size(); a++)
             pScene->mAnimations[a] = newAnims[a];
+    }
+}
+
+void USDImporterImplTinyusdz::parseMapKeyJointToValAnimChannelsMap(
+        aiAnimation *nanim,
+        const std::map<std::string,
+                std::map<ChannelType, AnimationChannel>> &mapKeyJointToValAnimChannelsMap
+) {
+    stringstream ss;
+    auto mapIter = mapKeyJointToValAnimChannelsMap.begin();
+    size_t ich{0};
+    for (; mapIter != mapKeyJointToValAnimChannelsMap.end(); ++mapIter) {
+        aiNodeAnim *nbone = new aiNodeAnim;
+        nbone->mNodeName.Set(mapIter->first.c_str());
+        nanim->mChannels[ich] = nbone;
+        //            nbone->mNumPositionKeys = mapIter->second.size();
+        //            nbone->mPositionKeys = new aiVectorKey[nbone->mNumPositionKeys];
+        //            nbone->mNumRotationKeys = mapIter->second.size();
+        //            nbone->mRotationKeys = new aiQuatKey[nbone->mNumRotationKeys];
+        //            nbone->mNumScalingKeys = mapIter->second.size();
+        //            nbone->mScalingKeys = new aiVectorKey[nbone->mNumScalingKeys];
+
+        ss.str("");
+        ss << "        channels_map[" << ich << "]: key: " << mapIter->first;
+        //            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        parseMapKeyTypeToValAnimChannel(nanim, nbone, mapIter->second);
+        ++ich;
+    }
+}
+
+void USDImporterImplTinyusdz::parseMapKeyTypeToValAnimChannel(
+        aiAnimation *nanim,
+        aiNodeAnim *nbone,
+        const std::map<ChannelType, AnimationChannel> &typeToChannelMap
+) {
+    stringstream ss;
+    size_t i_trs = 0; // 0, 1, 2 for translate, rotate, scale: nothing useful here
+    auto tToCMapIter = typeToChannelMap.begin();
+    for (; tToCMapIter != typeToChannelMap.end(); ++tToCMapIter) {
+        ChannelType type = tToCMapIter->first;
+        ss.str("");
+        //                ss << "            types map[" << i << "][" << ich << "][" << i_trs << "][" <<
+        //                   tinyusdzAnimChannelTypeFor(type) << "]: ";
+        switch (type) {
+        case ChannelType::Translation: {
+            addBoneTranslations(nanim, nbone, tToCMapIter->second.translations);
+            //                        std::array<float, 3> translate = tToCMapIter->second.translations.samples[i_trs].value;
+            //                        aiVector3D pos(translate[0], translate[1], translate[2]);
+            //                        nbone->mPositionKeys[i_trs].mTime = tToCMapIter->second.translations.samples[i_trs].t;
+            //                        nbone->mPositionKeys[i_trs].mValue = pos;
+            //                        ss << tToCMapIter->second.translations.samples.size() << " samples";
+            //                        ss << "[" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]";
+            break;
+        }
+        case ChannelType::Rotation: {
+            addBoneRotations(nanim, nbone, tToCMapIter->second.rotations);
+            //                        ss << tToCMapIter->second.rotations.samples.size() << " samples";
+            //                        ss << "[" <<
+            //                                tToCMapIter->second.rotations.samples[0].value[0] << ", " <<
+            //                                tToCMapIter->second.rotations.samples[0].value[1] << ", " <<
+            //                                tToCMapIter->second.rotations.samples[0].value[2] << ", " <<
+            //                                tToCMapIter->second.rotations.samples[0].value[3] << "]";
+            break;
+        }
+        case ChannelType::Scale: {
+            addBoneScales(nanim, nbone, tToCMapIter->second.scales);
+            //                        ss << tToCMapIter->second.scales.samples.size() << " samples";
+            //                        ss << "[" <<
+            //                                tToCMapIter->second.scales.samples[0].value[0] << ", " <<
+            //                                tToCMapIter->second.scales.samples[0].value[1] << ", " <<
+            //                                tToCMapIter->second.scales.samples[0].value[2] << "]";
+            break;
+        }
+        case ChannelType::Weight: {
+            //                        addBoneScales(nbone, tToCMapIter->second.scales);
+            ss << "            types map[" << i_trs << "][" <<
+                    tinyusdzAnimChannelTypeFor(type) << "]: ";
+            ss << tToCMapIter->second.weights.samples.size() << " samples";
+            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+            //                        ss << "[" <<
+            //                                tToCMapIter->second.scales.samples[0].value[0] << ", " <<
+            //                                tToCMapIter->second.scales.samples[0].value[1] << ", " <<
+            //                                tToCMapIter->second.scales.samples[0].value[2] << "]";
+            break;
+        }
+        default:
+            break;
+        }
+        //                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        ++i_trs;
     }
 }
 

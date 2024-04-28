@@ -160,6 +160,19 @@ public:
             aiScene *pScene,
             const std::string &nameWExt);
 
+    void parseMapKeyJointToValAnimChannelsMap(
+            aiAnimation *nanim,
+            const std::map<std::string,
+                    std::map<tinyusdz::tydra::AnimationChannel::ChannelType,
+                            tinyusdz::tydra::AnimationChannel>> &mapKeyJointToValAnimChannelsMap
+            );
+
+    void parseMapKeyTypeToValAnimChannel(
+            aiAnimation *nanim,
+            aiNodeAnim *nbone,
+            const std::map<tinyusdz::tydra::AnimationChannel::ChannelType,
+                    tinyusdz::tydra::AnimationChannel> &typeToChannelMap);
+
     void blendShapes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
