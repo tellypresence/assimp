@@ -38,6 +38,24 @@ const char *const TAG = "tusdz EXPERIMENTAL";
 namespace Assimp {
 using namespace std;
 
+void USDImporterImplTinyusdz::setupBonesNAnim(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        const std::string &nameWExt) {
+    stringstream ss;
+    std::map<size_t, tinyusdz::tydra::Node> meshNodes;
+    pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
+    ss.str("");
+    ss << "setupBonesNAnim(): model" << nameWExt << ", meshNodes now has " << meshNodes.size() << " items";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    meshesBonesNAnim(
+            render_scene,
+            pScene,
+            meshNodes,
+            nameWExt);
+    animations(render_scene, pScene, nameWExt);
+}
+
 aiNode *USDImporterImplTinyusdz::nodes(
         const tinyusdz::tydra::RenderScene &render_scene,
         std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
@@ -104,16 +122,36 @@ void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
     }
 }
 
-void USDImporterImplTinyusdz::bonesForMesh(
+void USDImporterImplTinyusdz::meshesBonesNAnim(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+        const std::string &nameWExt) {
+    stringstream ss;
+    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
+    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
+    ss.str("");
+    ss << "meshesBonesNAnim(): pScene->mNumMeshes: " << pScene->mNumMeshes << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+
+    size_t bonesCount{0};
+    for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
+        bonesCount += bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
+        blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
+        pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
+    }
+    ss.str("");
+    ss << "meshesBonesNAnim(): bonesCount: " << bonesCount;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+}
+
+size_t USDImporterImplTinyusdz::bonesForMesh(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
         size_t meshIdx,
         const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
         const std::string &nameWExt) {
     stringstream ss;
-    ss.str("");
-    ss << "bonesForMesh(): bones for mesh[" << meshIdx << "]";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     //    render_scene.meshes[meshIdx].joint_and_weights.jointIndices.size() << " jointIndices, " <<
     //    render_scene.meshes[meshIdx].joint_and_weights.jointWeights.size() << " jointWeights, elementSize: " <<
@@ -135,8 +173,11 @@ void USDImporterImplTinyusdz::bonesForMesh(
             ss.str("");
             ss << "bonesForMesh(): mesh[" << meshIdx << "] has no weights";
             TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
-            return;
+            return newWeights.size();
         }
+        ss.str("");
+        ss << "bonesForMesh(), " << nameWExt << ": bones for mesh[" << meshIdx << "]: " << newWeights.size() << " weights";
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         aiBone *nbone = new aiBone;
         if (meshNodes.find(meshIdx) != meshNodes.end()) {
             nbone->mName.Set(meshNodes.at(meshIdx).prim_name);
@@ -168,6 +209,15 @@ void USDImporterImplTinyusdz::bonesForMesh(
         pScene->mMeshes[meshIdx]->mBones = new aiBone *[pScene->mMeshes[meshIdx]->mNumBones];
         std::copy(newBones.begin(), newBones.end(), pScene->mMeshes[meshIdx]->mBones);
     }
+    ss.str("");
+    ss << "bonesForMesh(): mesh[" << meshIdx << "] mNumBones: " << pScene->mMeshes[meshIdx]->mNumBones;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    for (size_t i = 0; i < pScene->mMeshes[meshIdx]->mNumBones; ++i) {
+        ss.str("");
+        ss << "    mesh[" << meshIdx << "] bone[" << i << "]: " << pScene->mMeshes[meshIdx]->mBones[i]->mName.C_Str();
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    }
+    return pScene->mMeshes[meshIdx]->mNumBones;
 }
 
 //tinyusdz::tydra::Node USDImporterImplTinyusdz::bonesRecursive(
@@ -179,7 +229,9 @@ using AnimSamplerTransOrScale = tinyusdz::tydra::AnimationSampler<std::array<flo
 using AnimSamplerRot = tinyusdz::tydra::AnimationSampler<std::array<float, 4>>;
 
 static void addBoneTranslations(
+        aiAnimation *nanim,
         aiNodeAnim *nbone, AnimSamplerTransOrScale translations) {
+    stringstream ss;
     nbone->mNumPositionKeys = translations.samples.size();
     nbone->mPositionKeys = new aiVectorKey[nbone->mNumPositionKeys];
     size_t i{0};
@@ -187,12 +239,21 @@ static void addBoneTranslations(
         aiVector3D pos(translate.value[0], translate.value[1], translate.value[2]);
         nbone->mPositionKeys[i].mValue = pos;
         nbone->mPositionKeys[i].mTime = translate.t;
+//        if (nbone->mPositionKeys[i].mTime > nanim->mDuration) {
+//            ss.str("");
+//            ss << "        addBoneTranslations(): updating mDuration (pos samp " << i << ") from " <<
+//                    nanim->mDuration << " to " << nbone->mPositionKeys[i].mTime;
+//            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+//        }
+        nanim->mDuration = std::max(nanim->mDuration, nbone->mPositionKeys[i].mTime);
         ++i;
     }
 }
 
 static void addBoneRotations(
+        aiAnimation *nanim,
         aiNodeAnim *nbone, AnimSamplerRot rotations) {
+    stringstream ss;
     nbone->mNumRotationKeys = rotations.samples.size();
     nbone->mRotationKeys = new aiQuatKey[nbone->mNumRotationKeys];
     size_t i{0};
@@ -200,12 +261,21 @@ static void addBoneRotations(
         nbone->mRotationKeys[i].mValue = aiQuaternion(
                 rotIter.value[0], rotIter.value[1], rotIter.value[2], rotIter.value[3]);
         nbone->mRotationKeys[i].mTime = rotIter.t;
+//        if (nbone->mRotationKeys[i].mTime > nanim->mDuration) {
+//            ss.str("");
+//            ss << "        addBoneRotations(): updating mDuration (rot samp " << i << ") from " <<
+//                    nanim->mDuration << " to " << nbone->mRotationKeys[i].mTime;
+//            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+//        }
+        nanim->mDuration = std::max(nanim->mDuration, nbone->mRotationKeys[i].mTime);
         ++i;
     }
 }
 
 static void addBoneScales(
+        aiAnimation *nanim,
         aiNodeAnim *nbone, AnimSamplerTransOrScale scales) {
+    stringstream ss;
     nbone->mNumScalingKeys = scales.samples.size();
     nbone->mScalingKeys = new aiVectorKey[nbone->mNumScalingKeys];
     size_t i{0};
@@ -213,6 +283,13 @@ static void addBoneScales(
         aiVector3D scale(scaleIter.value[0], scaleIter.value[1], scaleIter.value[2]);
         nbone->mScalingKeys[i].mValue = scale;
         nbone->mScalingKeys[i].mTime = scaleIter.t;
+//        if (nbone->mScalingKeys[i].mTime > nanim->mDuration) {
+//            ss.str("");
+//            ss << "        addBoneScales(): updating mDuration (sca samp " << i << ") from " <<
+//                    nanim->mDuration << " to " << nbone->mScalingKeys[i].mTime;
+//            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+//        }
+        nanim->mDuration = std::max(nanim->mDuration, nbone->mScalingKeys[i].mTime);
         ++i;
     }
 }
@@ -294,7 +371,7 @@ void USDImporterImplTinyusdz::animations(
                 //                   tinyusdzAnimChannelTypeFor(type) << "]: ";
                 switch (type) {
                 case ChannelType::Translation: {
-                    addBoneTranslations(nbone, mapIter2->second.translations);
+                    addBoneTranslations(nanim, nbone, mapIter2->second.translations);
                     //                        std::array<float, 3> translate = mapIter2->second.translations.samples[i_trs].value;
                     //                        aiVector3D pos(translate[0], translate[1], translate[2]);
                     //                        nbone->mPositionKeys[i_trs].mTime = mapIter2->second.translations.samples[i_trs].t;
@@ -304,7 +381,7 @@ void USDImporterImplTinyusdz::animations(
                     break;
                 }
                 case ChannelType::Rotation: {
-                    addBoneRotations(nbone, mapIter2->second.rotations);
+                    addBoneRotations(nanim, nbone, mapIter2->second.rotations);
                     //                        ss << mapIter2->second.rotations.samples.size() << " samples";
                     //                        ss << "[" <<
                     //                                mapIter2->second.rotations.samples[0].value[0] << ", " <<
@@ -314,7 +391,7 @@ void USDImporterImplTinyusdz::animations(
                     break;
                 }
                 case ChannelType::Scale: {
-                    addBoneScales(nbone, mapIter2->second.scales);
+                    addBoneScales(nanim, nbone, mapIter2->second.scales);
                     //                        ss << mapIter2->second.scales.samples.size() << " samples";
                     //                        ss << "[" <<
                     //                                mapIter2->second.scales.samples[0].value[0] << ", " <<
@@ -340,10 +417,19 @@ void USDImporterImplTinyusdz::animations(
                 //                TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
                 ++i_trs;
             }
+//            ss.str("");
+//            ss << "        anim[" << i << "]: mDuration: " << nanim->mDuration;
+//            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
             ++ich;
         }
+        ss.str("");
+        ss << "    animation[" << i << "] done...";
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         ++i;
     }
+    ss.str("");
+    ss << "animations(): anims done (i now " << i << ")...";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     // store all converted animations in the scene
     if (newAnims.size() > 0) {
@@ -381,10 +467,11 @@ void USDImporterImplTinyusdz::blendShapesForMesh(
     stringstream ss;
     const size_t numBlendShapeTargets{render_scene.meshes[meshIdx].targets.size()};
     (void) numBlendShapeTargets; // Ignore unused variable when -Werror enabled
-    ss.str("");
-    ss << "blendShapesForMesh(): mesh[" << meshIdx << "], model" << nameWExt <<
-            ", numBlendShapeTargets: " << numBlendShapeTargets;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    if (numBlendShapeTargets > 0) {
+        ss.str("");
+        ss << "blendShapesForMesh(): mesh[" << meshIdx << "], model" << nameWExt << ", numBlendShapeTargets: " << numBlendShapeTargets;
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    }
     auto mapIter = render_scene.meshes[meshIdx].targets.begin();
     size_t i{0};
     for (; mapIter != render_scene.meshes[meshIdx].targets.end(); ++mapIter) {

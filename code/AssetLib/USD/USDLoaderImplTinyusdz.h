@@ -67,7 +67,6 @@ public:
     void meshes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
-            const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
             const std::string &nameWExt);
 
     void verticesForMesh(
@@ -122,6 +121,11 @@ public:
 
     // EXPERIMENTAL
     // Untested/R 'n D code, to be considered suspect
+    void setupBonesNAnim(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
+
     aiNode *nodes(
             const tinyusdz::tydra::RenderScene &render_scene,
             std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
@@ -135,7 +139,13 @@ public:
     void sanityCheckNodesRecursive(
             aiNode *pNode);
 
-    void bonesForMesh(
+    void meshesBonesNAnim(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::string &nameWExt);
+
+    size_t bonesForMesh(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
             size_t meshIdx,

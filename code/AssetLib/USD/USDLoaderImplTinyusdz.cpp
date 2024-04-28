@@ -188,33 +188,25 @@ void USDImporterImplTinyusdz::InternReadFile(
         TINYUSDZLOGE(TAG, "%s", ss.str().c_str());
         return;
     }
-    std::map<size_t, tinyusdz::tydra::Node> meshNodes;
-    pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
-    ss.str("");
-    ss << "InternReadFile(): meshNodes: " << meshNodes.size() << " items";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
 //    sanityCheckNodesRecursive(pScene->mRootNode);
-    meshes(render_scene, pScene, meshNodes, nameWExt);
+    meshes(render_scene, pScene, nameWExt);
     materials(render_scene, pScene, nameWExt);
     textures(render_scene, pScene, nameWExt);
     textureImages(render_scene, pScene, nameWExt);
     buffers(render_scene, pScene, nameWExt);
-    animations(render_scene, pScene, nameWExt);
+    setupBonesNAnim(render_scene, pScene, nameWExt);
 }
 
 void USDImporterImplTinyusdz::meshes(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
-        const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
         const std::string &nameWExt) {
     stringstream ss;
     pScene->mNumMeshes = render_scene.meshes.size();
     pScene->mMeshes = new aiMesh *[pScene->mNumMeshes]();
-    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
-    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
     ss.str("");
-    ss << "meshes(): pScene->mNumMeshes: " << pScene->mNumMeshes << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    ss << "meshes(): pScene->mNumMeshes: " << pScene->mNumMeshes;
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     // Export meshes
@@ -241,9 +233,6 @@ void USDImporterImplTinyusdz::meshes(
         normalsForMesh(render_scene, pScene, meshIdx, nameWExt);
         materialsForMesh(render_scene, pScene, meshIdx, nameWExt);
         uvsForMesh(render_scene, pScene, meshIdx, nameWExt);
-        bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
-        blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
-        pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
 }
 
