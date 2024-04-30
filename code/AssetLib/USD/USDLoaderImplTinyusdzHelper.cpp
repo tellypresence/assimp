@@ -96,6 +96,10 @@ aiMatrix4x4 Assimp::tinyUsdzMat4ToAiMat4(const double matIn[4][4]) {
     return matOut;
 }
 
+aiVector3D Assimp::tinyUsdzScaleOrPosToAssimp(const std::array<float, 3> &scaleOrPosIn) {
+    return aiVector3D(scaleOrPosIn[0], scaleOrPosIn[1], scaleOrPosIn[2]);
+}
+
 aiQuaternion Assimp::tinyUsdzQuatToAiQuat(const std::array<float, 4> &quatIn) {
     // tinyusdz "quat" is x,y,z,w
     // aiQuaternion is w,x,y,z

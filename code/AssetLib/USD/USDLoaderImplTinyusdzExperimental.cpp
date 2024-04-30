@@ -236,8 +236,7 @@ static void addBoneTranslations(
     nbone->mPositionKeys = new aiVectorKey[nbone->mNumPositionKeys];
     size_t i{0};
     for (const auto translate : translations.samples) {
-        aiVector3D pos(translate.value[0], translate.value[1], translate.value[2]);
-        nbone->mPositionKeys[i].mValue = pos;
+        nbone->mPositionKeys[i].mValue = tinyUsdzScaleOrPosToAssimp(translate.value);
         nbone->mPositionKeys[i].mTime = translate.t;
 //        if (nbone->mPositionKeys[i].mTime > nanim->mDuration) {
 //            ss.str("");
@@ -279,8 +278,7 @@ static void addBoneScales(
     nbone->mScalingKeys = new aiVectorKey[nbone->mNumScalingKeys];
     size_t i{0};
     for (const auto scaleIter : scales.samples) {
-        aiVector3D scale(scaleIter.value[0], scaleIter.value[1], scaleIter.value[2]);
-        nbone->mScalingKeys[i].mValue = scale;
+        nbone->mScalingKeys[i].mValue = tinyUsdzScaleOrPosToAssimp(scaleIter.value);
         nbone->mScalingKeys[i].mTime = scaleIter.t;
 //        if (nbone->mScalingKeys[i].mTime > nanim->mDuration) {
 //            ss.str("");

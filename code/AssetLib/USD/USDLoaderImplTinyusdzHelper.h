@@ -15,6 +15,8 @@ std::string tinyusdzAnimChannelTypeFor(
 std::string tinyusdzNodeTypeFor(tinyusdz::tydra::NodeType type);
 aiMatrix4x4 tinyUsdzMat4ToAiMat4(const double matIn[4][4]);
 
+aiVector3D tinyUsdzScaleOrPosToAssimp(const std::array<float, 3> &scaleOrPosIn);
+
 /**
  * Convert quaternion from tinyusdz "quat" to assimp "aiQuaternion" type
  *
