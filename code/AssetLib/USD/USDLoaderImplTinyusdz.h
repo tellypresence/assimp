@@ -136,12 +136,29 @@ public:
             const tinyusdz::tydra::Node &node,
             std::map<size_t, tinyusdz::tydra::Node> &meshNodes);
 
+    /*aiNode * */void skelNodes(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes,
+            const std::string &nameWExt);
+
+    /*aiNode * */void skelNodesRecursive(
+            aiNode *pNodeParent,
+            const tinyusdz::tydra::SkelNode &skelNode,
+            std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes);
+
     void sanityCheckNodesRecursive(
             aiNode *pNode);
 
     void meshesBonesNAnim(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
+            const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::string &nameWExt);
+
+    size_t jointAndWeightsForMesh(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            size_t meshIdx,
             const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
             const std::string &nameWExt);
 
@@ -154,6 +171,11 @@ public:
 
     tinyusdz::tydra::Node bonesRecursive(
             const tinyusdz::tydra::Node &node);
+
+    void skeletons(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
 
     void animations(
             const tinyusdz::tydra::RenderScene &render_scene,

@@ -46,6 +46,8 @@ void USDImporterImplTinyusdz::setupBonesNAnim(
     stringstream ss;
     std::map<size_t, tinyusdz::tydra::Node> meshNodes;
     pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
+    std::map<size_t, tinyusdz::tydra::SkelNode> mapSkelNodes;
+    skelNodes(render_scene, mapSkelNodes, nameWExt);
     ss.str("");
     ss << "setupBonesNAnim(): model" << nameWExt << ", meshNodes now has " << meshNodes.size() << " items";
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
@@ -54,6 +56,7 @@ void USDImporterImplTinyusdz::setupBonesNAnim(
             pScene,
             meshNodes,
             nameWExt);
+    skeletons(render_scene, pScene, nameWExt);
     animations(render_scene, pScene, nameWExt);
 }
 
@@ -123,6 +126,61 @@ void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
     }
 }
 
+/*aiNode * */void USDImporterImplTinyusdz::skelNodes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes,
+        const std::string &nameWExt) {
+    stringstream ss;
+    const size_t numSkeletons{render_scene.skeletons.size()};
+    ss.str("");
+    ss << "skelNodes(): model" << nameWExt << ", numSkeletons: " << numSkeletons;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    for (size_t iSkel = 0; iSkel < numSkeletons; ++iSkel) {
+        ss.str("");
+        ss << "    skelHierarchy[" << iSkel << "]: prim_name: " << render_scene.skeletons[iSkel].prim_name <<
+                ", anim_id: " << render_scene.skeletons[iSkel].anim_id <<
+                ", disp name: " << render_scene.skeletons[iSkel].display_name <<
+                ", abs_path: " << render_scene.skeletons[iSkel].abs_path <<
+                ", root id: " << render_scene.skeletons[iSkel].root_node.joint_id;
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        /*return*/ skelNodesRecursive(nullptr, render_scene.skeletons[iSkel].root_node, mapSkelNodes);
+    }
+}
+
+/*aiNode * */void USDImporterImplTinyusdz::skelNodesRecursive(
+        aiNode *pNodeParent,
+        const tinyusdz::tydra::SkelNode &skelNode,
+        std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes) {
+    stringstream ss;
+//    aiNode *cNode = new aiNode();
+//    cNode->mParent = pNodeParent;
+//    cNode->mName.Set(node.prim_name);
+//    cNode->mTransformation = tinyUsdzMat4ToAiMat4(node.local_matrix.m);
+    ss.str("");
+    ss << "        skelNodesRecursive(): joint_id " << skelNode.joint_id << ", joint_name |" <<
+            skelNode.joint_name << "|, joint_path |" << skelNode.joint_path;
+//    if (cNode->mParent != nullptr) {
+//        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
+//    }
+    ss << " has " << skelNode.children.size() << " children";
+//    if (skelNode.joint_id > -1) {
+//        ss << "\n    node mesh id: " << node.id << " (node type: " << tinyusdzNodeTypeFor(node.nodeType) << ")";
+//        mapSkelNodes[node.id] = node;
+//    }
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+//    if (!skelNode.children.empty()) {
+//        cNode->mNumChildren = node.children.size();
+//        cNode->mChildren = new aiNode *[cNode->mNumChildren];
+//    }
+
+//    size_t i{0};
+    for (const auto &childNode: skelNode.children) {
+        /*cNode->mChildren[i] =*/ skelNodesRecursive(nullptr, childNode, mapSkelNodes);
+//        ++i;
+    }
+//    return cNode;
+}
+
 void USDImporterImplTinyusdz::meshesBonesNAnim(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
@@ -144,6 +202,19 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
     ss.str("");
     ss << "meshesBonesNAnim(): bonesCount: " << bonesCount;
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+}
+
+size_t USDImporterImplTinyusdz::jointAndWeightsForMesh(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        size_t meshIdx,
+        const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+        const std::string &nameWExt) {
+    stringstream ss;
+    ss.str("");
+    ss << "jointAndWeightsForMesh(): mesh[" << meshIdx << "] skel_id: " << render_scene.meshes[meshIdx].skel_id;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    return 0;
 }
 
 size_t USDImporterImplTinyusdz::bonesForMesh(
@@ -290,6 +361,17 @@ static void addBoneScales(
         nanim->mDuration = std::max(nanim->mDuration, nbone->mScalingKeys[i].mTime);
         ++i;
     }
+}
+
+void USDImporterImplTinyusdz::skeletons(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        const std::string &nameWExt) {
+    stringstream ss;
+    const size_t numSkeletons{render_scene.skeletons.size()};
+    ss.str("");
+    ss << "skeletons(): model" << nameWExt << ", numSkeletons: " << numSkeletons;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 }
 
 using tinyusdz::tydra::AnimationChannel;
