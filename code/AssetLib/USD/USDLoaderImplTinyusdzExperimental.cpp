@@ -376,6 +376,7 @@ void USDImporterImplTinyusdz::skeletons(
 
 using tinyusdz::tydra::AnimationChannel;
 using ChannelType = AnimationChannel::ChannelType;
+static const float kMillisecondsFromSeconds = 1000.f;
 void USDImporterImplTinyusdz::animations(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
@@ -404,6 +405,8 @@ void USDImporterImplTinyusdz::animations(
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
         if (!animation.blendshape_weights_map.empty()) {
+            nanim->mNumMorphMeshChannels = animation.blendshape_weights_map.size();
+            nanim->mMorphMeshChannels = new aiMeshMorphAnim *[nanim->mNumMorphMeshChannels];
             ss.str("");
             ss << "    animation[" << i << "] has " << animation.blendshape_weights_map.size() << " blendshape weights";
             TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
@@ -411,15 +414,40 @@ void USDImporterImplTinyusdz::animations(
 
         auto bwMapIter = animation.blendshape_weights_map.begin();
         //std::map<std::string, std::vector<AnimationSample<float>>> blendshape_weights_map;
-        size_t ich = 0;
+        size_t iBsCh = 0;
         for (; bwMapIter != animation.blendshape_weights_map.end(); ++bwMapIter) {
             const std::string &name{bwMapIter->first};
-            const auto &vecAnimSamples{bwMapIter->second};
+            const auto &vecAnimSamples{bwMapIter->second}; // std::vector<AnimationSample<float>>
             ss.str("");
-            ss << "        blendshape_weights_map[" << i << "][" << ich << "] blendshape name " << name << " has " <<
+            ss << "    anim[" << i << "] blend weight[" << iBsCh << "]: " <<
+                    name << ", " << vecAnimSamples.size() << " samples (keys?)";
+            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+
+            aiMeshMorphAnim *morphAnim = new aiMeshMorphAnim;
+            nanim->mMorphMeshChannels[iBsCh] = morphAnim;
+            morphAnim->mName.Set(name);
+            morphAnim->mNumKeys = vecAnimSamples.size();
+            morphAnim->mKeys = new aiMeshMorphKey[morphAnim->mNumKeys];
+            for (size_t key = 0; key < morphAnim->mNumKeys; ++key) {
+                morphAnim->mKeys[key].mNumValuesAndWeights = static_cast<unsigned int>(vecAnimSamples.size());
+                morphAnim->mKeys[key].mValues = new unsigned int[vecAnimSamples.size()];
+                morphAnim->mKeys[key].mWeights = new double[vecAnimSamples.size()];
+
+                morphAnim->mKeys[key].mTime = vecAnimSamples[key].t * kMillisecondsFromSeconds;
+                for (size_t valueIndex = 0; valueIndex < vecAnimSamples.size(); ++valueIndex) {
+                    ss.str("");
+                    ss << "        anim[" << i << "] blend weight[" << iBsCh << "] key[" << key << "] val idx [" <<
+                            valueIndex << "]: vecAnimSamples[" << vecAnimSamples[key].value << "].value: " << vecAnimSamples[key].value;
+                    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+                    morphAnim->mKeys[key].mValues[valueIndex] = valueIndex;
+                    morphAnim->mKeys[key].mWeights[valueIndex] = vecAnimSamples[key].value;
+                }
+            }
+            ss.str("");
+            ss << "        blendshape_weights_map[" << i << "][" << iBsCh << "] blendshape name " << name << " has " <<
                     vecAnimSamples.size() << " samples";
             TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-            ++ich;
+            ++iBsCh;
         }
 
         nanim->mNumChannels = animation.channels_map.size();
