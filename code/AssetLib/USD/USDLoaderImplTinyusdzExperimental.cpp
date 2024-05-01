@@ -93,9 +93,9 @@ aiNode *USDImporterImplTinyusdz::nodesRecursive(
         ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
     }
     ss << " has " << node.children.size() << " children";
-    if (node.nodeType == NodeType::Mesh) {
+    if (node.id > -1) {
+        ss << "\n    node mesh id: " << node.id << " (node type: " << tinyusdzNodeTypeFor(node.nodeType) << ")";
         meshNodes[node.id] = node;
-        ss << "\n    node mesh id: " << node.id;
     }
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     if (!node.children.empty()) {
@@ -194,13 +194,17 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     size_t bonesCount{0};
+    size_t bonesCountViaJointNWeights{0};
     for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
-        bonesCount += bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
+        bonesCountViaJointNWeights += jointAndWeightsForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
+        // TODO: disabled for blend shapes
+//        bonesCount += bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
         blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
         pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
     ss.str("");
-    ss << "meshesBonesNAnim(): bonesCount: " << bonesCount;
+    ss << "meshesBonesNAnim(): bonesCountViaJointNWeights: " << bonesCountViaJointNWeights <<
+            ", bonesCount: " << bonesCount;
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 }
 
@@ -253,8 +257,8 @@ size_t USDImporterImplTinyusdz::bonesForMesh(
         aiBone *nbone = new aiBone;
         if (meshNodes.find(meshIdx) != meshNodes.end()) {
             nbone->mName.Set(meshNodes.at(meshIdx).prim_name);
-            //            nbone->mOffsetMatrix = tinyUsdzMat4ToAiMat4(meshNodes.at(meshIdx).local_matrix.m);
-            nbone->mOffsetMatrix = tinyUsdzMat4ToAiMat4(meshNodes.at(meshIdx).global_matrix.m);
+            nbone->mOffsetMatrix = tinyUsdzMat4ToAiMat4(meshNodes.at(meshIdx).local_matrix.m);
+//            nbone->mOffsetMatrix = tinyUsdzMat4ToAiMat4(meshNodes.at(meshIdx).global_matrix.m);
             //            nbone->mOffsetMatrix = aiMatrix4x4(); // TODO: sanity check
             ss.str("");
             ss << "bonesForMesh(): mesh[" << meshIdx << "] nbone->mName: " << nbone->mName.C_Str();
@@ -462,17 +466,26 @@ void USDImporterImplTinyusdz::animations(
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         ++i;
     }
-    ss.str("");
-    ss << "animations(): anims done (i now " << i << ")...";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     // store all converted animations in the scene
-    if (newAnims.size() > 0) {
-        pScene->mNumAnimations = (unsigned int)newAnims.size();
+    ss.str("");
+    ss << "animations(): newAnims.size(): " << newAnims.size();
+    newAnims.size() > 0 ? (ss << ", newAnims[0].mNumChannels: " << newAnims[0]->mNumChannels) : ss << "";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    if (newAnims.size() > 0  &&
+            newAnims[0]->mNumChannels > 0) { // TODO: update for blend shapes
+        pScene->mNumAnimations = newAnims.size();
         pScene->mAnimations = new aiAnimation *[pScene->mNumAnimations];
         for (unsigned int a = 0; a < newAnims.size(); a++)
             pScene->mAnimations[a] = newAnims[a];
+        ss.str("");
+        ss << "animations(): pScene->mNumAnimations: " << pScene->mNumAnimations;
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     }
+
+    ss.str("");
+    ss << "animations(): anims done (i now " << i << ")...";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 }
 
 void USDImporterImplTinyusdz::parseMapKeyJointToValAnimChannelsMap(
@@ -487,16 +500,9 @@ void USDImporterImplTinyusdz::parseMapKeyJointToValAnimChannelsMap(
         aiNodeAnim *nbone = new aiNodeAnim;
         nbone->mNodeName.Set(mapIter->first.c_str());
         nanim->mChannels[ich] = nbone;
-        //            nbone->mNumPositionKeys = mapIter->second.size();
-        //            nbone->mPositionKeys = new aiVectorKey[nbone->mNumPositionKeys];
-        //            nbone->mNumRotationKeys = mapIter->second.size();
-        //            nbone->mRotationKeys = new aiQuatKey[nbone->mNumRotationKeys];
-        //            nbone->mNumScalingKeys = mapIter->second.size();
-        //            nbone->mScalingKeys = new aiVectorKey[nbone->mNumScalingKeys];
-
         ss.str("");
         ss << "        channels_map[" << ich << "]: key: " << mapIter->first;
-        //            TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         parseMapKeyTypeToValAnimChannel(nanim, nbone, mapIter->second);
         ++ich;
     }
