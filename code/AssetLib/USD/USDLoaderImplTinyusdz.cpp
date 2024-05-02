@@ -50,6 +50,7 @@ Copyright (c) 2006-2024, assimp team
 // internal headers
 #include <assimp/ai_assert.h>
 #include <assimp/anim.h>
+#include <assimp/CreateAnimMesh.h>
 #include <assimp/DefaultIOSystem.h>
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/fast_atof.h>
@@ -199,6 +200,7 @@ void USDImporterImplTinyusdz::InternReadFile(
     std::map<size_t, tinyusdz::tydra::Node> meshNodes;
     setupNodes(render_scene, pScene, meshNodes, nameWExt);
 
+    setupBlendShapes(render_scene, pScene, nameWExt);
 //    setupBonesNAnim(render_scene, pScene, nameWExt);
 }
 
@@ -671,6 +673,65 @@ void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     for (size_t i = 0; i < cNode->mNumChildren; ++i) {
         sanityCheckNodesRecursive(cNode->mChildren[i]);
+    }
+}
+
+void USDImporterImplTinyusdz::setupBlendShapes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        const std::string &nameWExt) {
+    stringstream ss;
+    ss.str("");
+    ss << "    setupBlendShapes(): iterating over " << pScene->mNumMeshes << " meshes for model" << nameWExt;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
+         blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
+    }
+}
+
+void USDImporterImplTinyusdz::blendShapesForMesh(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        size_t meshIdx,
+        const std::string &nameWExt) {
+    stringstream ss;
+    const size_t numBlendShapeTargets{render_scene.meshes[meshIdx].targets.size()};
+    (void) numBlendShapeTargets; // Ignore unused variable when -Werror enabled
+    ss.str("");
+    ss << "    blendShapesForMesh(): mesh[" << meshIdx << "], model" << nameWExt << ", numBlendShapeTargets: " << numBlendShapeTargets;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    if (numBlendShapeTargets > 0) {
+        pScene->mMeshes[meshIdx]->mNumAnimMeshes = numBlendShapeTargets;
+        pScene->mMeshes[meshIdx]->mAnimMeshes = new aiAnimMesh *[pScene->mMeshes[meshIdx]->mNumAnimMeshes];
+    }
+    auto mapIter = render_scene.meshes[meshIdx].targets.begin();
+    size_t animMeshIdx{0};
+    for (; mapIter != render_scene.meshes[meshIdx].targets.end(); ++mapIter) {
+        const std::string name{mapIter->first};
+        const tinyusdz::tydra::ShapeTarget shapeTarget{mapIter->second};
+        pScene->mMeshes[meshIdx]->mAnimMeshes[animMeshIdx] = aiCreateAnimMesh(pScene->mMeshes[meshIdx]);
+        //        ss.str("");
+        //        ss << "    mAnimMeshes[" << animMeshIdx << "]: mNumVertices: " << pScene->mMeshes[meshIdx]->mAnimMeshes[animMeshIdx]->mNumVertices <<
+        //                ", target: " << shapeTarget.pointIndices.size() << " pointIndices, " << shapeTarget.pointOffsets.size() <<
+        //                " pointOffsets, " << shapeTarget.normalOffsets.size() << " normalOffsets";
+        //        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        for (size_t iVert = 0; iVert < shapeTarget.pointOffsets.size(); ++iVert) {
+            pScene->mMeshes[meshIdx]->mAnimMeshes[animMeshIdx]->mVertices[shapeTarget.pointIndices[iVert]] +=
+                    tinyUsdzScaleOrPosToAssimp(shapeTarget.pointOffsets[iVert]);
+        }
+        for (size_t iVert = 0; iVert < shapeTarget.normalOffsets.size(); ++iVert) {
+            pScene->mMeshes[meshIdx]->mAnimMeshes[animMeshIdx]->mNormals[shapeTarget.pointIndices[iVert]] +=
+                    tinyUsdzScaleOrPosToAssimp(shapeTarget.normalOffsets[iVert]);
+        }
+        //        ss.str("");
+        //        ss << "    target[" << animMeshIdx << "]: name: " << name << ", prim_name: " <<
+        //                shapeTarget.prim_name << ", abs_path: " << shapeTarget.abs_path <<
+        //                ", display_name: " << shapeTarget.display_name << ", " << shapeTarget.pointIndices.size() <<
+        //                " pointIndices, " << shapeTarget.pointOffsets.size() << " pointOffsets, " <<
+        //                shapeTarget.normalOffsets.size() << " normalOffsets, " << shapeTarget.inbetweens.size() <<
+        //                " inbetweens";
+        //        TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+        ++animMeshIdx;
     }
 }
 

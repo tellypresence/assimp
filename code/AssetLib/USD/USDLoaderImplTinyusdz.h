@@ -136,6 +136,17 @@ public:
             const tinyusdz::tydra::Node &node,
             std::map<size_t, tinyusdz::tydra::Node> &meshNodes);
 
+    void setupBlendShapes(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
+
+    void blendShapesForMesh(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            size_t meshIdx,
+            const std::string &nameWExt);
+
     // EXPERIMENTAL
     // Untested/R 'n D code, to be considered suspect
     void setupBonesNAnim(
@@ -213,17 +224,6 @@ public:
             aiNodeAnim *nbone,
             tinyusdz::tydra::AnimationChannel::ChannelType type,
             const tinyusdz::tydra::AnimationChannel &animChannel);
-
-    void blendShapes(
-            const tinyusdz::tydra::RenderScene &render_scene,
-            aiScene *pScene,
-            const std::string &nameWExt);
-
-    void blendShapesForMesh(
-            const tinyusdz::tydra::RenderScene &render_scene,
-            aiScene *pScene,
-            size_t meshIdx,
-            const std::string &nameWExt);
 };
 } // namespace Assimp
 #endif // AI_USDLOADER_IMPL_TINYUSDZ_H_INCLUDED
