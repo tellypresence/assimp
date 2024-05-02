@@ -190,7 +190,10 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
     pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
     pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
     ss.str("");
-    ss << "meshesBonesNAnim(): pScene->mNumMeshes: " << pScene->mNumMeshes << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    ss << "meshesBonesNAnim(): pScene->mNumMeshes: " << pScene->mNumMeshes;
+    if (pScene->mRootNode != nullptr) {
+        ss << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    }
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     size_t bonesCount{0};
