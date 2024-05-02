@@ -136,6 +136,9 @@ public:
             const tinyusdz::tydra::Node &node,
             std::map<size_t, tinyusdz::tydra::Node> &meshNodes);
 
+    void sanityCheckNodesRecursive(
+            aiNode *pNode);
+
     void setupBlendShapes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
@@ -164,9 +167,6 @@ public:
             aiNode *pNodeParent,
             const tinyusdz::tydra::SkelNode &skelNode,
             std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes);
-
-    void sanityCheckNodesRecursive(
-            aiNode *pNode);
 
     void meshesBonesNAnim(
             const tinyusdz::tydra::RenderScene &render_scene,
