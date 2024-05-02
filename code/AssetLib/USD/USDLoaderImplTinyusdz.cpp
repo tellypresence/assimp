@@ -195,7 +195,11 @@ void USDImporterImplTinyusdz::InternReadFile(
     textures(render_scene, pScene, nameWExt);
     textureImages(render_scene, pScene, nameWExt);
     buffers(render_scene, pScene, nameWExt);
-    setupBonesNAnim(render_scene, pScene, nameWExt);
+
+    std::map<size_t, tinyusdz::tydra::Node> meshNodes;
+    setupNodes(render_scene, pScene, meshNodes, nameWExt);
+
+//    setupBonesNAnim(render_scene, pScene, nameWExt);
 }
 
 void USDImporterImplTinyusdz::meshes(
@@ -578,6 +582,95 @@ void USDImporterImplTinyusdz::buffers(
         ss << "    buffer[" << i << "]: count: " << buffer.data.size() << ", type: " << to_string(buffer.componentType);
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
         ++i;
+    }
+}
+
+void USDImporterImplTinyusdz::setupNodes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        aiScene *pScene,
+        std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+        const std::string &nameWExt) {
+    stringstream ss;
+
+    pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
+    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
+    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
+    ss.str("");
+    ss << "setupNodes(): pScene->mNumMeshes: " << pScene->mNumMeshes;
+    if (pScene->mRootNode != nullptr) {
+        ss << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
+    }
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+
+    for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
+        pScene->mRootNode->mMeshes[meshIdx] = meshIdx;
+    }
+
+}
+
+aiNode *USDImporterImplTinyusdz::nodes(
+        const tinyusdz::tydra::RenderScene &render_scene,
+        std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+        const std::string &nameWExt) {
+    const size_t numNodes{render_scene.nodes.size()};
+    (void) numNodes; // Ignore unused variable when -Werror enabled
+    stringstream ss;
+    ss.str("");
+    ss << "nodes(): model" << nameWExt << ", numNodes: " << numNodes;
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    return nodesRecursive(nullptr, render_scene.nodes[0], meshNodes);
+}
+
+using Assimp::tinyusdzNodeTypeFor;
+using Assimp::tinyUsdzMat4ToAiMat4;
+using tinyusdz::tydra::NodeType;
+aiNode *USDImporterImplTinyusdz::nodesRecursive(
+        aiNode *pNodeParent,
+        const tinyusdz::tydra::Node &node,
+        std::map<size_t, tinyusdz::tydra::Node> &meshNodes) {
+    stringstream ss;
+    aiNode *cNode = new aiNode();
+    cNode->mParent = pNodeParent;
+    cNode->mName.Set(node.prim_name);
+    cNode->mTransformation = tinyUsdzMat4ToAiMat4(node.local_matrix.m);
+    ss.str("");
+    ss << "nodesRecursive(): node " << cNode->mName.C_Str() <<
+            " type: |" << tinyusdzNodeTypeFor(node.nodeType) <<
+            "|, disp " << node.display_name << ", abs " << node.abs_path;
+    if (cNode->mParent != nullptr) {
+        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
+    }
+    ss << " has " << node.children.size() << " children";
+    if (node.id > -1) {
+        ss << "\n    node mesh id: " << node.id << " (node type: " << tinyusdzNodeTypeFor(node.nodeType) << ")";
+        meshNodes[node.id] = node;
+    }
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    if (!node.children.empty()) {
+        cNode->mNumChildren = node.children.size();
+        cNode->mChildren = new aiNode *[cNode->mNumChildren];
+    }
+
+    size_t i{0};
+    for (const auto &childNode: node.children) {
+        cNode->mChildren[i] = nodesRecursive(cNode, childNode, meshNodes);
+        ++i;
+    }
+    return cNode;
+}
+
+void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
+        aiNode *cNode) {
+    stringstream ss;
+    ss.str("");
+    ss << "sanityCheckNodesRecursive(): node " << cNode->mName.C_Str();
+    if (cNode->mParent != nullptr) {
+        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
+    }
+    ss << " has " << cNode->mNumChildren << " children";
+    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
+    for (size_t i = 0; i < cNode->mNumChildren; ++i) {
+        sanityCheckNodesRecursive(cNode->mChildren[i]);
     }
 }
 

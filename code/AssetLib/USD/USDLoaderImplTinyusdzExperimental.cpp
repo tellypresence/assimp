@@ -44,8 +44,6 @@ void USDImporterImplTinyusdz::setupBonesNAnim(
         aiScene *pScene,
         const std::string &nameWExt) {
     stringstream ss;
-    std::map<size_t, tinyusdz::tydra::Node> meshNodes;
-    pScene->mRootNode = nodes(render_scene, meshNodes, nameWExt);
     std::map<size_t, tinyusdz::tydra::SkelNode> mapSkelNodes;
     skelNodes(render_scene, mapSkelNodes, nameWExt);
     ss.str("");
@@ -58,72 +56,6 @@ void USDImporterImplTinyusdz::setupBonesNAnim(
             nameWExt);
     skeletons(render_scene, pScene, nameWExt);
     animations(render_scene, pScene, nameWExt);
-}
-
-aiNode *USDImporterImplTinyusdz::nodes(
-        const tinyusdz::tydra::RenderScene &render_scene,
-        std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
-        const std::string &nameWExt) {
-    const size_t numNodes{render_scene.nodes.size()};
-    (void) numNodes; // Ignore unused variable when -Werror enabled
-    stringstream ss;
-    ss.str("");
-    ss << "nodes(): model" << nameWExt << ", numNodes: " << numNodes;
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    return nodesRecursive(nullptr, render_scene.nodes[0], meshNodes);
-}
-
-using Assimp::tinyusdzNodeTypeFor;
-using Assimp::tinyUsdzMat4ToAiMat4;
-using tinyusdz::tydra::NodeType;
-aiNode *USDImporterImplTinyusdz::nodesRecursive(
-        aiNode *pNodeParent,
-        const tinyusdz::tydra::Node &node,
-        std::map<size_t, tinyusdz::tydra::Node> &meshNodes) {
-    stringstream ss;
-    aiNode *cNode = new aiNode();
-    cNode->mParent = pNodeParent;
-    cNode->mName.Set(node.prim_name);
-    cNode->mTransformation = tinyUsdzMat4ToAiMat4(node.local_matrix.m);
-    ss.str("");
-    ss << "nodesRecursive(): node " << cNode->mName.C_Str() <<
-            " type: |" << tinyusdzNodeTypeFor(node.nodeType) <<
-            "|, disp " << node.display_name << ", abs " << node.abs_path;
-    if (cNode->mParent != nullptr) {
-        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
-    }
-    ss << " has " << node.children.size() << " children";
-    if (node.id > -1) {
-        ss << "\n    node mesh id: " << node.id << " (node type: " << tinyusdzNodeTypeFor(node.nodeType) << ")";
-        meshNodes[node.id] = node;
-    }
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    if (!node.children.empty()) {
-        cNode->mNumChildren = node.children.size();
-        cNode->mChildren = new aiNode *[cNode->mNumChildren];
-    }
-
-    size_t i{0};
-    for (const auto &childNode: node.children) {
-        cNode->mChildren[i] = nodesRecursive(cNode, childNode, meshNodes);
-        ++i;
-    }
-    return cNode;
-}
-
-void USDImporterImplTinyusdz::sanityCheckNodesRecursive(
-        aiNode *cNode) {
-    stringstream ss;
-    ss.str("");
-    ss << "sanityCheckNodesRecursive(): node " << cNode->mName.C_Str();
-    if (cNode->mParent != nullptr) {
-        ss << " (parent " << cNode->mParent->mName.C_Str() << ")";
-    }
-    ss << " has " << cNode->mNumChildren << " children";
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    for (size_t i = 0; i < cNode->mNumChildren; ++i) {
-        sanityCheckNodesRecursive(cNode->mChildren[i]);
-    }
 }
 
 /*aiNode * */void USDImporterImplTinyusdz::skelNodes(
@@ -187,14 +119,6 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
         const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
         const std::string &nameWExt) {
     stringstream ss;
-    pScene->mRootNode->mNumMeshes = pScene->mNumMeshes;
-    pScene->mRootNode->mMeshes = new unsigned int[pScene->mRootNode->mNumMeshes];
-    ss.str("");
-    ss << "meshesBonesNAnim(): pScene->mNumMeshes: " << pScene->mNumMeshes;
-    if (pScene->mRootNode != nullptr) {
-        ss << ", mRootNode->mNumMeshes: " << pScene->mRootNode->mNumMeshes;
-    }
-    TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
 
     size_t bonesCount{0};
     size_t bonesCountViaJointNWeights{0};
@@ -203,7 +127,6 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
         // TODO: disabled for blend shapes
 //        bonesCount += bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
         blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
-        pScene->mRootNode->mMeshes[meshIdx] = static_cast<unsigned int>(meshIdx);
     }
     ss.str("");
     ss << "meshesBonesNAnim(): bonesCountViaJointNWeights: " << bonesCountViaJointNWeights <<

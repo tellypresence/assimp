@@ -119,12 +119,12 @@ public:
             aiScene *pScene,
             const std::string &nameWExt);
 
-    // EXPERIMENTAL
-    // Untested/R 'n D code, to be considered suspect
-    void setupBonesNAnim(
+    void setupNodes(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
-            const std::string &nameWExt);
+            std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::string &nameWExt
+            );
 
     aiNode *nodes(
             const tinyusdz::tydra::RenderScene &render_scene,
@@ -135,6 +135,13 @@ public:
             aiNode *pNodeParent,
             const tinyusdz::tydra::Node &node,
             std::map<size_t, tinyusdz::tydra::Node> &meshNodes);
+
+    // EXPERIMENTAL
+    // Untested/R 'n D code, to be considered suspect
+    void setupBonesNAnim(
+            const tinyusdz::tydra::RenderScene &render_scene,
+            aiScene *pScene,
+            const std::string &nameWExt);
 
     /*aiNode * */void skelNodes(
             const tinyusdz::tydra::RenderScene &render_scene,
