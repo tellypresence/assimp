@@ -41,17 +41,19 @@ using namespace std;
 void USDImporterImplTinyusdz::setupBonesNAnim(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
+        std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
         const std::string &nameWExt) {
     stringstream ss;
     std::map<size_t, tinyusdz::tydra::SkelNode> mapSkelNodes;
     skelNodes(render_scene, mapSkelNodes, nameWExt);
     ss.str("");
-    ss << "setupBonesNAnim(): model" << nameWExt << ", meshNodes now has " << meshNodes.size() << " items";
+    ss << "setupBonesNAnim(): model: " << nameWExt << ", mapSkelNodes now has " << mapSkelNodes.size() << " items";
     TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
     meshesBonesNAnim(
             render_scene,
             pScene,
             meshNodes,
+            mapSkelNodes,
             nameWExt);
     skeletons(render_scene, pScene, nameWExt);
     animations(render_scene, pScene, nameWExt);
@@ -116,6 +118,7 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
         const tinyusdz::tydra::RenderScene &render_scene,
         aiScene *pScene,
         const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+        const std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes,
         const std::string &nameWExt) {
     stringstream ss;
 
@@ -123,9 +126,8 @@ void USDImporterImplTinyusdz::meshesBonesNAnim(
     size_t bonesCountViaJointNWeights{0};
     for (size_t meshIdx = 0; meshIdx < pScene->mNumMeshes; meshIdx++) {
         bonesCountViaJointNWeights += jointAndWeightsForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
-        // TODO: disabled for blend shapes
+        // TODO: disabled to prevent disappearing models due to incorrect transformations
 //        bonesCount += bonesForMesh(render_scene, pScene, meshIdx, meshNodes, nameWExt);
-        blendShapesForMesh(render_scene, pScene, meshIdx, nameWExt);
     }
     ss.str("");
     ss << "meshesBonesNAnim(): bonesCountViaJointNWeights: " << bonesCountViaJointNWeights <<

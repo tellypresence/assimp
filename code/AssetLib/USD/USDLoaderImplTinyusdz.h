@@ -152,6 +152,7 @@ public:
     void setupBonesNAnim(
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
+            std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
             const std::string &nameWExt);
 
     /*aiNode * */void skelNodes(
@@ -171,6 +172,7 @@ public:
             const tinyusdz::tydra::RenderScene &render_scene,
             aiScene *pScene,
             const std::map<size_t, tinyusdz::tydra::Node> &meshNodes,
+            const std::map<size_t, tinyusdz::tydra::SkelNode> &mapSkelNodes,
             const std::string &nameWExt);
 
     size_t jointAndWeightsForMesh(
