@@ -208,7 +208,7 @@ void USDImporterImplTinyusdz::InternReadFile(
     setupBlendShapes(render_scene, pScene, nameWExt);
 
     // EXPERIMENTAL
-//    setupBonesNAnim(render_scene, pScene, meshNodes, nameWExt);
+    setupBonesNAnim(render_scene, pScene, meshNodes, nameWExt);
 }
 
 void USDImporterImplTinyusdz::meshes(
