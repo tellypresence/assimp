@@ -64,53 +64,6 @@ Copyright (c) 2006-2024, assimp team
 
 namespace Assimp {
 using namespace std;
-bool isUsda(const std::string &pFile) {
-    size_t pos = pFile.find_last_of('.');
-    if (pos == string::npos) {
-        return false;
-    }
-    string ext = pFile.substr(pos + 1);
-    if (ext.size() != 4) {
-        return false;
-    }
-    return (ext[0] == 'u' || ext[0] == 'U') && (ext[1] == 's' || ext[1] == 'S') && (ext[2] == 'd' || ext[2] == 'D') && (ext[3] == 'a' || ext[3] == 'A');
-}
-
-bool isUsdc(const std::string &pFile) {
-    size_t pos = pFile.find_last_of('.');
-    if (pos == string::npos) {
-        return false;
-    }
-    string ext = pFile.substr(pos + 1);
-    if (ext.size() != 4) {
-        return false;
-    }
-    return (ext[0] == 'u' || ext[0] == 'U') && (ext[1] == 's' || ext[1] == 'S') && (ext[2] == 'd' || ext[2] == 'D') && (ext[3] == 'c' || ext[3] == 'C');
-}
-
-bool isUsdz(const std::string &pFile) {
-    size_t pos = pFile.find_last_of('.');
-    if (pos == string::npos) {
-        return false;
-    }
-    string ext = pFile.substr(pos + 1);
-    if (ext.size() != 4) {
-        return false;
-    }
-    return (ext[0] == 'u' || ext[0] == 'U') && (ext[1] == 's' || ext[1] == 'S') && (ext[2] == 'd' || ext[2] == 'D') && (ext[3] == 'z' || ext[3] == 'Z');
-}
-
-bool isUsd(const std::string &pFile) {
-    size_t pos = pFile.find_last_of('.');
-    if (pos == string::npos) {
-        return false;
-    }
-    string ext = pFile.substr(pos + 1);
-    if (ext.size() != 3) {
-        return false;
-    }
-    return (ext[0] == 'u' || ext[0] == 'U') && (ext[1] == 's' || ext[1] == 'S') && (ext[2] == 'd' || ext[2] == 'D');
-}
 } // namespace Assimp
 
 #endif // !! ASSIMP_BUILD_NO_USD_IMPORTER

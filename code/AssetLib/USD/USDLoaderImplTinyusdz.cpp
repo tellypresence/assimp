@@ -77,6 +77,11 @@ namespace {
 namespace Assimp {
 using namespace std;
 
+using tinyusdz::IsUSD;
+using tinyusdz::IsUSDA;
+using tinyusdz::IsUSDC;
+using tinyusdz::IsUSDZ;
+
 void USDImporterImplTinyusdz::InternReadFile(
         const std::string &pFile,
         aiScene *pScene,
@@ -96,23 +101,23 @@ void USDImporterImplTinyusdz::InternReadFile(
     tinyusdz::Stage stage;
     std::string warn, err;
     bool is_usdz{ false };
-    if (isUsdc(pFile)) {
+    if (IsUSDC(pFile)) {
         ret = LoadUSDCFromFile(pFile, &stage, &warn, &err, options);
         ss.str("");
         ss << "InternReadFile(): LoadUSDCFromFile() result: " << ret;
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    } else if (isUsda(pFile)) {
+    } else if (IsUSDA(pFile)) {
         ret = LoadUSDAFromFile(pFile, &stage, &warn, &err, options);
         ss.str("");
         ss << "InternReadFile(): LoadUSDAFromFile() result: " << ret;
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    } else if (isUsdz(pFile)) {
+    } else if (IsUSDZ(pFile)) {
         ret = LoadUSDZFromFile(pFile, &stage, &warn, &err, options);
         is_usdz = true;
         ss.str("");
         ss << "InternReadFile(): LoadUSDZFromFile() result: " << ret;
         TINYUSDZLOGD(TAG, "%s", ss.str().c_str());
-    } else if (isUsd(pFile)) {
+    } else if (IsUSD(pFile)) {
         ret = LoadUSDFromFile(pFile, &stage, &warn, &err, options);
         ss.str("");
         ss << "InternReadFile(): LoadUSDFromFile() result: " << ret;
