@@ -953,7 +953,7 @@ IF (ASSIMP_BUILD_VRML_IMPORTER)
     #  - replace QtXml w/pugixml
     #  - disable meshlab cmake scripts to prevent breaking assimp build
     #  - address compiler warnings to avoid breaking build for users who wisely treat warnings-as-errors
-    set(Meshlab_PATCH_CMD git apply ${Meshlab_BASE_ABSPATH}/patches/meshlab.patch)
+    set(Meshlab_PATCH_CMD git apply ${Meshlab_BASE_ABSPATH}/patches/meshlab_lf.patch)
 
     # Note: cloning entire meshlab repo is wasteful since we require literally only two source files.
     #       There is a technique using "git archive" e.g.
