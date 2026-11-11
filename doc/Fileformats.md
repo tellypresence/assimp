@@ -12,6 +12,8 @@ __Importers__:
 - ASE
 - ASK
 - B3D
+- [BLEND](https://en.wikipedia.org/wiki/.blend_(file_format))
+   - **SUPPORT DEPRECATED:** It is too time-consuming to maintain an undocumented, continuously evolving format which contains so much more than we need.
 - [BVH](https://en.wikipedia.org/wiki/Biovision_Hierarchy)
 - CSM
 - COB
@@ -29,12 +31,12 @@ __Importers__:
 - HMB
 - IFC-STEP
 - IQM
-- IRR / IRRMESH
+- [IRR](https://irrlicht.sourceforge.io/?page_id=45) / [IRRMESH](https://www.irrlicht3d.org/index.php?t=592)
 - [LWO](https://en.wikipedia.org/wiki/LightWave_3D)
 - LWS
 - LXO
 - [M3D](https://bztsrc.gitlab.io/model3d)
-   - **REQUIRES OPT-IN:** enable cmake options `ASSIMP_BUILD_M3D_IMPORTER`/`ASSIMP_BUILD_M3D_EXPORTER`
+   - **REQUIRES OPT-IN:** enable cmake options `ASSIMP_BUILD_M3D_IMPORTER`
       - NOTE: author of `M3D` format abandoned assimp support; implementation is incomplete and buggy.
 - MD2
 - MD3
@@ -45,20 +47,20 @@ __Importers__:
 - MOT
 - MS3D
 - NDO
-- NFF
+- [NFF](https://paulbourke.net/dataformats/nff/nff1.html)
 - [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
 - [OFF](https://en.wikipedia.org/wiki/OFF_(file_format))
 - [OGEX](https://en.wikipedia.org/wiki/Open_Game_Engine_Exchange)
 - [PLY](https://en.wikipedia.org/wiki/PLY_(file_format))
 - PMX
 - PRJ
-- Q3O
-- Q3S
+- Q3O (Quick3D object)
+- Q3S (Quick3D scene)
 - RAW
 - SCN
 - SIB
 - SMD
-- [STP](https://en.wikipedia.org/wiki/ISO_10303-21)
+- [STEP/STP](https://en.wikipedia.org/wiki/ISO_10303-21)
 - [STL](https://en.wikipedia.org/wiki/STL_(file_format))
 - TER
 - UC
@@ -68,13 +70,10 @@ __Importers__:
 - VRML/WRL
    - **REQUIRES OPT-IN:** enable cmake option `ASSIMP_BUILD_VRML_IMPORTER`
 - VTA
-- X
+- X (DirectX)
 - [X3D](https://en.wikipedia.org/wiki/X3D)
 - XGL
 - ZGL
-
-Note: support for [BLEND](https://en.wikipedia.org/wiki/.blend_(file_format)) is deprecated.
-It is too time-consuming to maintain an undocumented format which contains so much more than we need.
 
 Additionally, some formats are supported by dependency on non-free code or external SDKs (not built by default):
 
@@ -82,17 +81,22 @@ Additionally, some formats are supported by dependency on non-free code or exter
 
 __Exporters__:
 
-- DAE (Collada)
-- STL
-- OBJ
-- PLY
-- X
-- 3DS
-- JSON (for WebGl, via https://github.com/acgessler/assimp2json)
+- [3DS](https://en.wikipedia.org/wiki/.3ds)
+- [3MF](https://en.wikipedia.org/wiki/3D_Manufacturing_Format) ( experimental )
 - ASSBIN
-- STEP
+- ASSJSON (for WebGl, via https://github.com/acgessler/assimp2json)
+- ASSXML
+- [DAE/Collada](https://en.wikipedia.org/wiki/COLLADA)
+- [FBX](https://en.wikipedia.org/wiki/FBX) ( experimental )
+- [glTF 1.0](https://en.wikipedia.org/wiki/GlTF#glTF_1.0) (partial)
+- [glTF 2.0](https://en.wikipedia.org/wiki/GlTF#glTF_2.0) (partial)
+- [M3D](https://bztsrc.gitlab.io/model3d)
+    - **REQUIRES OPT-IN:** enable cmake option `ASSIMP_BUILD_M3D_EXPORTER`
+        - NOTE: author of `M3D` format abandoned assimp support; implementation is incomplete and buggy.
+- [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
+- [OGEX](https://en.wikipedia.org/wiki/Open_Game_Engine_Exchange)
+- [PLY](https://en.wikipedia.org/wiki/PLY_(file_format))
 - [PBRTv4](https://github.com/mmp/pbrt-v4)
-- glTF 1.0 (partial)
-- glTF 2.0 (partial)
-- 3MF ( experimental )
-- FBX ( experimental )
+- [STEP/STP](https://en.wikipedia.org/wiki/ISO_10303-21)
+- [STL](https://en.wikipedia.org/wiki/STL_(file_format))
+- X (DirectX)
