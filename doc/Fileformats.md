@@ -9,14 +9,14 @@ __Importers__:
 - [AC3D](https://en.wikipedia.org/wiki/AC3D)
 - ACC
 - AMJ
-- ASE
+- ASE (ASCII Scene Export)
 - ASK
 - B3D
 - [BLEND](https://en.wikipedia.org/wiki/.blend_(file_format))
    - **SUPPORT DEPRECATED:** It is too time-consuming to maintain an undocumented, continuously evolving format which contains so much more than we need.
 - [BVH](https://en.wikipedia.org/wiki/Biovision_Hierarchy)
-- CSM
-- COB
+- CSM (Character Studio Motion)
+- COB (Caligari trueSpace 3D Object)
 - [DAE/Collada](https://en.wikipedia.org/wiki/COLLADA)
 - [DXF](https://en.wikipedia.org/wiki/AutoCAD_DXF)
 - ENFF
@@ -28,52 +28,54 @@ __Importers__:
   + KHR_materials_pbrSpecularGlossiness ( 5.0 )
   + KHR_materials_unlit ( 5.0 )
   + KHR_texture_transform ( 5.1 under test )
-- HMB
+- HMP (3D GameStudio Heightmap)
 - IFC-STEP
-- IQM
+- IQM (Inter-Quake Model)
 - [IRR](https://irrlicht.sourceforge.io/?page_id=45) / [IRRMESH](https://www.irrlicht3d.org/index.php?t=592)
 - [LWO](https://en.wikipedia.org/wiki/LightWave_3D)
-- LWS
-- LXO
+- [LWS](https://www.renderhub.com/guides/3d-file-formats/lws)
+- LXO (Foundry Modo)
+   - **Note:** uses LWO loader
 - [M3D](https://bztsrc.gitlab.io/model3d)
    - **REQUIRES OPT-IN:** enable cmake options `ASSIMP_BUILD_M3D_IMPORTER`
       - NOTE: author of `M3D` format abandoned assimp support; implementation is incomplete and buggy.
-- MD2
-- MD3
-- MD5
-- MDC
-- MDL
+- MD2 (id Software, 1997)
+- MD3 (id Software, 1999)
+- MD5 (id Software, 2004)
+- MDC (compressed MD3)
+- MDL (id Software, 1996)
 - MESH / MESH.XML
 - MOT
 - MS3D
-- NDO
+- NDO (Izware Nendo)
 - [NFF](https://paulbourke.net/dataformats/nff/nff1.html)
 - [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
 - [OFF](https://en.wikipedia.org/wiki/OFF_(file_format))
 - [OGEX](https://en.wikipedia.org/wiki/Open_Game_Engine_Exchange)
 - [PLY](https://en.wikipedia.org/wiki/PLY_(file_format))
-- PMX
-- PRJ
+- PMX (MikuMikuDance)
+- PRJ (3D Studio project file)
 - Q3O (Quick3D object)
 - Q3S (Quick3D scene)
 - RAW
-- SCN
-- SIB
-- SMD
+- SCN (Caligari trueSpace)
+   - **Note:** uses COB loader 
+- SIB (Nevercenter Silo Binary)
+- SMD (StudioModel Data)
 - [STEP/STP](https://en.wikipedia.org/wiki/ISO_10303-21)
 - [STL](https://en.wikipedia.org/wiki/STL_(file_format))
-- TER
+- TER (Terragen Terrain)
 - UC
 - [USD](https://en.wikipedia.org/wiki/Universal_Scene_Description)
    - **REQUIRES OPT-IN:** enable cmake option `ASSIMP_BUILD_USD_IMPORTER`
    - To use latest v1.0.0 USD release also enable cmake option `ASSIMP_USD_BETA`
 - VRML/WRL
    - **REQUIRES OPT-IN:** enable cmake option `ASSIMP_BUILD_VRML_IMPORTER`
-- VTA
+- VTA (evolution of SMD)
 - X (DirectX)
 - [X3D](https://en.wikipedia.org/wiki/X3D)
-- XGL
-- ZGL
+- [XGL](https://www.okino.com/convert/_what_is/what_is_xgl.htm)
+- [ZGL](https://www.okino.com/convert/_what_is/what_is_xgl.htm)
 
 Additionally, some formats are supported by dependency on non-free code or external SDKs (not built by default):
 
